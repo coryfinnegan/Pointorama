@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Pointorama.AppHost/Pointorama.AppHost.csproj" />
+  <Project Path="Pointorama.ServiceDefaults/Pointorama.ServiceDefaults.csproj" />
+</Solution>

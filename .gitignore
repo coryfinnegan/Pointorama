@@ -1,0 +1,26 @@
+## .NET
+bin/
+obj/
+*.user
+
+## Node / Next.js
+web/node_modules/
+web/.next/
+web/*.db
+web/*.db-shm
+web/*.db-wal
+
+## Misc
+.DS_Store
+*.env.local
+
+## IDE / tool artifacts
+.vs/
+.playwright-cli/
+web/test-results/
+web/playwright-report/
+web/tsconfig.tsbuildinfo
+web/next-env.d.ts
+
+## Claude Code local settings (skills are committed, local permissions are not)
+.claude/settings.local.json

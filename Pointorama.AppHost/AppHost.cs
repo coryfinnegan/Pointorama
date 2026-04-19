@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var web = builder.AddNpmApp("web", "../web", "dev")
+var web = builder.AddJavaScriptApp("web", "../web", "dev")
     .WithHttpEndpoint(env: "PORT", port: 3000)
     .WithExternalHttpEndpoints();
 

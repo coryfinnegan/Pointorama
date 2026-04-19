@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { prizes } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
+import { assertAdmin } from "@/lib/session";
 
 export async function GET() {
   const db = getDb();
@@ -14,6 +15,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await assertAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = getDb();
   const { name, description, pointCost, imageUrl } = await req.json();
   if (!name || typeof pointCost !== "number" || pointCost < 1) {

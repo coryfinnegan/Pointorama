@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { pointsLog } from "@/db/schema";
 import { desc } from "drizzle-orm";
+import { assertAdmin } from "@/lib/session";
 
 export async function GET() {
   const db = getDb();
@@ -11,6 +12,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await assertAdmin();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = getDb();
   const { amount, note } = await req.json();
   if (typeof amount !== "number" || amount === 0) {

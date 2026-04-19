@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createSessionToken, COOKIE_NAME, EXPIRY_SECONDS } from "@/lib/session";
@@ -9,8 +9,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const hash = createHash("sha256").update(pin).digest("hex");
-  if (hash !== process.env.ADMIN_PIN_HASH) {
+  const hash = process.env.ADMIN_PIN_HASH ?? "";
+  const valid = await bcrypt.compare(pin, hash);
+  if (!valid) {
     return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
   }
 

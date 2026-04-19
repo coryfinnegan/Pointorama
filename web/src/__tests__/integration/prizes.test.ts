@@ -1,6 +1,10 @@
 import { vi, describe, it, expect } from "vitest";
 import { NextRequest } from "next/server";
 
+vi.mock("@/lib/session", () => ({
+  assertAdmin: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/db", async () => {
   const { createTestDb } = await import("../helpers/create-test-db");
   const db = createTestDb();

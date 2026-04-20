@@ -1,31 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type { Prize, Redemption } from "@/db/schema";
 
 async function fireConfetti() {
   const confetti = (await import("canvas-confetti")).default;
-  confetti({
-    particleCount: 160,
-    spread: 90,
-    origin: { y: 0.55 },
-    colors: ["#6366f1", "#a855f7", "#ec4899", "#facc15", "#34d399"],
-  });
+  confetti({ particleCount: 200, spread: 90, origin: { y: 0.55 }, colors: ["#ffd700","#ff4455","#00ff88","#4488ff","#ff44dd","#ffaa00"] });
 }
 
 export default function ShopPage() {
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [available, setAvailable] = useState(0);
   const [confirming, setConfirming] = useState<Prize | null>(null);
+  const [justBought, setJustBought] = useState<Prize | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function load() {
@@ -34,9 +21,7 @@ export default function ShopPage() {
       fetch("/api/redemptions").then((r) => r.json()),
       fetch("/api/prizes").then((r) => r.json()),
     ]);
-    const spent = (redemptions as Redemption[])
-      .filter((r) => r.status !== "cancelled")
-      .reduce((s: number, r: Redemption) => s + r.pointsSpent, 0);
+    const spent = (redemptions as Redemption[]).filter((r) => r.status !== "cancelled").reduce((s: number, r: Redemption) => s + r.pointsSpent, 0);
     setAvailable(pts.total - spent);
     setPrizes(prizeList);
   }
@@ -54,8 +39,10 @@ export default function ShopPage() {
     setLoading(false);
     setConfirming(null);
     if (res.ok) {
+      const prize = confirming;
+      setJustBought(prize);
       await fireConfetti();
-      toast.success(`🎉 "${confirming.name}" redeemed! Ask Dad to get it for you.`);
+      setTimeout(() => setJustBought(null), 4000);
       load();
     } else {
       const err = await res.json();
@@ -63,156 +50,121 @@ export default function ShopPage() {
     }
   }
 
-  const affordable = prizes.filter((p) => available >= p.pointCost);
-  const tooExpensive = prizes.filter((p) => available < p.pointCost);
+  if (justBought) {
+    return (
+      <div className="game-screen" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh" }}>
+        {justBought.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={justBought.imageUrl} alt={justBought.name} className="anim-pop" style={{ width: 160, height: 160, objectFit: "cover", borderRadius: 4, marginBottom: 20, border: "3px solid var(--gold)", boxShadow: "0 0 30px rgba(255,215,0,0.5)" }} />
+        ) : (
+          <div className="anim-pop" style={{ fontSize: 88, marginBottom: 20 }}>🎁</div>
+        )}
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 13, color: "var(--gold)", textAlign: "center", marginBottom: 10 }} className="anim-glow">
+          REWARD UNLOCKED!
+        </div>
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--text)", textAlign: "center", marginBottom: 8 }}>{justBought.name}</div>
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", textAlign: "center" }}>GO FIND DAD TO REDEEM!</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Header with points balance */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 p-6 text-white shadow-lg">
-        <div className="relative z-10">
-          <p className="text-indigo-200 text-sm font-medium uppercase tracking-wide mb-1">Your Balance</p>
-          <p className="text-5xl font-extrabold tabular-nums">{available}</p>
-          <p className="text-indigo-200 mt-1">points to spend</p>
+    <div className="game-screen">
+      {/* Header */}
+      <div style={{ paddingTop: 20, marginBottom: 16 }}>
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 18, color: "var(--gold)" }}>🛍️ REWARD SHOP</div>
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 11, color: "var(--dim)", marginTop: 8 }}>
+          YOU HAVE ⭐ {available.toLocaleString()} POINTS
         </div>
-        <div className="absolute -right-8 -bottom-8 text-[120px] opacity-10 select-none">⭐</div>
       </div>
 
       {prizes.length === 0 && (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-5xl mb-4">🎁</p>
-          <p className="text-lg font-medium">No prizes yet — check back soon!</p>
+        <div style={{ textAlign: "center", padding: "60px 0", fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", lineHeight: 3 }}>
+          NO PRIZES YET!<br />CHECK BACK SOON!
         </div>
       )}
 
-      {/* Affordable prizes */}
-      {affordable.length > 0 && (
-        <section>
-          <h2 className="text-lg font-bold text-gray-700 mb-3">You can get these!</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {affordable.map((prize) => (
-              <PrizeCard
-                key={prize.id}
-                prize={prize}
-                canAfford
-                onRedeem={() => setConfirming(prize)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Too expensive */}
-      {tooExpensive.length > 0 && (
-        <section>
-          <h2 className="text-lg font-bold text-gray-400 mb-3">Keep earning for these</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 opacity-70">
-            {tooExpensive.map((prize) => (
-              <PrizeCard
-                key={prize.id}
-                prize={prize}
-                canAfford={false}
-                available={available}
-                onRedeem={() => {}}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <Dialog open={!!confirming} onOpenChange={() => setConfirming(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Redeem {confirming?.name}?</DialogTitle>
-            <DialogDescription>
-              This will use <strong>{confirming?.pointCost} points</strong>. You&apos;ll have{" "}
-              <strong>{available - (confirming?.pointCost ?? 0)} points</strong> left.
-              Dad will buy it for you!
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirming(null)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={redeem}
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {loading ? "Redeeming..." : "Yes, Redeem! 🎉"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function PrizeCard({
-  prize,
-  canAfford,
-  available,
-  onRedeem,
-}: {
-  prize: Prize;
-  canAfford: boolean;
-  available?: number;
-  onRedeem: () => void;
-}) {
-  const needed = available !== undefined ? prize.pointCost - available : 0;
-
-  return (
-    <div
-      className={`group relative flex flex-col rounded-2xl overflow-hidden shadow-md transition-all duration-200 ${
-        canAfford ? "hover:shadow-xl hover:-translate-y-1 cursor-pointer" : "cursor-default"
-      } bg-white`}
-      onClick={canAfford ? onRedeem : undefined}
-    >
-      {/* Image area */}
-      <div className="relative w-full h-48 bg-indigo-50 overflow-hidden">
-        {prize.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={prize.imageUrl}
-            alt={prize.name}
-            className={`w-full h-full object-cover transition-transform duration-300 ${
-              canAfford ? "group-hover:scale-105" : "grayscale"
-            }`}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-6xl">🎁</div>
-        )}
-
-        {/* Cost badge */}
-        <div className="absolute top-3 right-3">
-          <span className="bg-white/90 backdrop-blur-sm text-indigo-700 font-bold text-sm px-2.5 py-1 rounded-full shadow">
-            {prize.pointCost} pts
-          </span>
-        </div>
-
-        {/* Affordability overlay for too-expensive */}
-        {!canAfford && needed > 0 && (
-          <div className="absolute inset-0 flex items-end p-3">
-            <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-              Need {needed} more pts
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="p-4 flex flex-col flex-1 gap-1">
-        <p className="font-bold text-gray-800 leading-snug">{prize.name}</p>
-        {prize.description && (
-          <p className="text-sm text-gray-500 line-clamp-2">{prize.description}</p>
-        )}
-        {canAfford && (
-          <div className="mt-auto pt-3">
-            <div className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl text-center transition-colors">
-              Redeem!
+      {/* Confirm modal */}
+      {confirming && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 600, padding: 24 }}>
+          <div className="pcard anim-pop" style={{ width: "100%", maxWidth: 320, textAlign: "center", padding: 28 }}>
+            {confirming.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={confirming.imageUrl} alt={confirming.name} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 4, marginBottom: 16, border: "2px solid var(--gold)" }} />
+            ) : (
+              <div style={{ fontSize: 64, marginBottom: 16 }}>🎁</div>
+            )}
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 11, color: "var(--gold)", marginBottom: 8 }}>BUY THIS?</div>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--text)", marginBottom: 6 }}>{confirming.name}</div>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--red)", marginBottom: 6 }}>COST: {confirming.pointCost} ⭐</div>
+            {confirming.description && (
+              <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 20 }}>{confirming.description}</div>
+            )}
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button className="pbtn pbtn-gold" onClick={redeem} disabled={loading}>
+                {loading ? "..." : "YES!"}
+              </button>
+              <button className="pbtn pbtn-dim" onClick={() => setConfirming(null)}>BACK</button>
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))", gap: 14 }}>
+        {prizes.map((prize) => {
+          const can = available >= prize.pointCost;
+          return (
+            <div
+              key={prize.id}
+              className="pcard"
+              onClick={() => { if (can) setConfirming(prize); }}
+              style={{
+                cursor: can ? "pointer" : "default",
+                padding: 0,
+                overflow: "hidden",
+                border: can ? "2px solid rgba(255,215,0,0.35)" : "2px solid var(--bg3)",
+                opacity: can ? 1 : 0.55,
+                transition: "transform 0.15s, border-color 0.2s",
+                marginBottom: 0,
+              }}
+              onMouseEnter={(e) => { if (can) e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+            >
+              {/* Image or emoji */}
+              <div style={{ width: "100%", height: 140, background: "var(--bg3)", overflow: "hidden", position: "relative" }}>
+                {prize.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={prize.imageUrl}
+                    alt={prize.name}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", filter: can ? "none" : "grayscale(1)" }}
+                  />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52 }}>
+                    🎁
+                  </div>
+                )}
+                {/* Green "can afford" dot */}
+                {can && (
+                  <div style={{ position: "absolute", top: 6, right: 6, width: 10, height: 10, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 8px var(--green)" }} />
+                )}
+              </div>
+
+              {/* Info */}
+              <div style={{ padding: "10px 12px 14px" }}>
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 9, marginBottom: 8, lineHeight: 1.8, color: "var(--text)" }}>{prize.name}</div>
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 14, color: can ? "var(--gold)" : "var(--dim)" }}>
+                  {prize.pointCost} ⭐
+                </div>
+                {!can && (
+                  <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--red)", marginTop: 6 }}>
+                    NEED {(prize.pointCost - available).toLocaleString()} MORE
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

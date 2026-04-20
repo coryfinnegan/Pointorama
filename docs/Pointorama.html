@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pointorama ⭐ Sam's Quest</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080818;--bg2:#0f0f28;--bg3:#1a1a3a;--bg4:#22224a;
+  --gold:#ffd700;--gold2:#ffaa00;--green:#00ff88;--blue:#4488ff;--red:#ff4455;--purple:#cc44ff;
+  --text:#e8e8ff;--dim:#6666aa;
+  --pixel:'Press Start 2P',monospace;--body:'Nunito',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--body);position:relative}
+/* CRT effect */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.5) 100%);pointer-events:none;z-index:9998}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:9999}
+#root{height:100%;max-width:860px;margin:0 auto;position:relative}
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:9000;width:100%;height:100%}
+
+/* Scrollable content */
+.screen{height:100%;overflow-y:auto;padding:24px 28px 120px;-webkit-overflow-scrolling:touch}
+
+/* Pixel card */
+.pcard{background:var(--bg2);border:2px solid var(--bg3);border-radius:3px;padding:20px;margin-bottom:14px;position:relative}
+.pcard-gold{border-color:rgba(255,215,0,0.25);background:rgba(255,215,0,0.04)}
+.pcard-green{border-color:rgba(0,255,136,0.25);background:rgba(0,255,136,0.04)}
+
+/* Pixel buttons */
+.pbtn{font-family:var(--pixel);font-size:11px;padding:14px 24px;border:none;cursor:pointer;
+  text-transform:uppercase;transition:transform 0.08s,filter 0.1s;user-select:none;border-radius:2px;letter-spacing:0.5px}
+.pbtn:active{transform:translateY(3px)!important}
+.pbtn:hover{filter:brightness(1.15)}
+.pbtn-gold{background:var(--gold);color:#1a0600;box-shadow:0 4px 0 #9a7000,0 0 20px rgba(255,215,0,0.3)}
+.pbtn-green{background:var(--green);color:#002210;box-shadow:0 4px 0 #009944,0 0 20px rgba(0,255,136,0.3)}
+.pbtn-red{background:var(--red);color:#fff;box-shadow:0 4px 0 #880022}
+.pbtn-blue{background:var(--blue);color:#fff;box-shadow:0 4px 0 #224499}
+.pbtn-dim{background:var(--bg3);color:var(--dim);box-shadow:0 4px 0 #0a0a1a}
+
+/* Nav */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:860px;
+  background:var(--bg2);border-top:3px solid rgba(255,215,0,0.4);display:flex;z-index:200;
+  box-shadow:0 -6px 40px rgba(0,0,0,0.9)}
+.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 8px 18px;cursor:pointer;
+  font-size:10px;font-family:var(--pixel);color:var(--dim);border:none;background:none;gap:8px;
+  transition:color 0.2s,background 0.2s;position:relative}
+.navbtn:hover{background:rgba(255,215,0,0.05);color:var(--text)}
+.navbtn.active{color:var(--gold);background:rgba(255,215,0,0.07)}
+.navbtn.active::after{content:'';position:absolute;bottom:0;left:15%;right:15%;height:3px;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.navicon{font-size:32px;line-height:1}
+
+/* Progress bar */
+.ptrack{height:14px;background:var(--bg3);border-radius:2px;overflow:hidden;position:relative}
+.pfill{height:100%;transition:width 1s cubic-bezier(0.34,1.56,0.64,1);position:relative}
+.pfill::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);animation:shimmer 2s infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+
+/* Animations */
+@keyframes glow-pulse{0%,100%{text-shadow:0 0 10px var(--gold),0 0 20px var(--gold)}50%{text-shadow:0 0 20px var(--gold),0 0 50px var(--gold),0 0 80px rgba(255,215,0,0.5)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pop-in{0%{transform:scale(0) rotate(-15deg);opacity:0}70%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes pop-in-up{0%{transform:translateY(30px) scale(0.8);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes float-up{0%{opacity:1;transform:translateY(0) scale(1)}50%{opacity:1}100%{opacity:0;transform:translateY(-100px) scale(1.3)}}
+@keyframes fire{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.15) rotate(3deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@keyframes scan{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+@keyframes level-flash{0%,100%{opacity:1}50%{opacity:0}}
+
+.float-text{position:fixed;font-family:var(--pixel);font-size:22px;color:var(--gold);
+  text-shadow:0 0 15px var(--gold),0 0 30px var(--gold);animation:float-up 1.5s ease-out forwards;
+  pointer-events:none;z-index:8000;white-space:nowrap;transform:translateX(-50%)}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;
+  background:var(--bg3);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;
+  background:var(--gold);border-radius:2px;cursor:pointer;box-shadow:0 0 8px rgba(255,215,0,0.5)}
+input[type=text],input[type=password],input[type=number]{
+  font-family:var(--pixel);font-size:10px;background:var(--bg);border:2px solid var(--bg3);
+  color:var(--text);padding:10px;outline:none;width:100%;border-radius:2px}
+input[type=text]:focus,input[type=password]:focus,input[type=number]:focus{border-color:rgba(255,215,0,0.5)}
+
+/* Starfield */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;animation:twinkle var(--d) ease-in-out infinite var(--delay)}
+@keyframes twinkle{0%,100%{opacity:0.1}50%{opacity:0.8}}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div id="stars"></div>
+<div id="root"></div>
+
+<script>
+// Generate star background
+const starsEl = document.getElementById('stars');
+for(let i=0;i<80;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  const size=Math.random()*2+1;
+  s.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;background:${Math.random()>0.7?'#ffd700':'#aaaaff'};--d:${2+Math.random()*4}s;--delay:-${Math.random()*4}s`;
+  starsEl.appendChild(s);
+}
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "playerName": "Sam",
+  "accentColor": "#ffd700",
+  "soundEnabled": true
+}/*EDITMODE-END*/;
+
+const REWARDS = [
+  { id:'rootbeer',     name:'Root Beer',         cost:30,   icon:'🍺', desc:'A frosty cold one!' },
+  { id:'screentime',   name:'+1hr Screen Time',  cost:50,   icon:'🎮', desc:'One extra hour of gaming' },
+  { id:'dinnerpick',   name:'Choose Dinner',     cost:75,   icon:'🍕', desc:'You pick tonight!' },
+  { id:'movienight',   name:'Movie Night Pick',  cost:100,  icon:'🎬', desc:'You choose the movie!' },
+  { id:'lego_small',   name:'Small Lego Set',    cost:300,  icon:'🧱', desc:'A Lego kit of your choice' },
+  { id:'lego_technic', name:'Lego Technic',      cost:700,  icon:'⚙️', desc:'An awesome Technic build!' },
+  { id:'videogame',    name:'New Video Game',    cost:1200, icon:'🕹️', desc:'Any game you want!' },
+  { id:'lego_big',     name:'Mega Lego Set',     cost:1800, icon:'🏰', desc:'The biggest Lego set!' },
+];
+
+const LEVELS = [
+  { level:1, name:'ROOKIE',      min:0,    max:150,  color:'#8899cc' },
+  { level:2, name:'ADVENTURER',  min:150,  max:400,  color:'#44cc88' },
+  { level:3, name:'HERO',        min:400,  max:900,  color:'#4488ff' },
+  { level:4, name:'CHAMPION',    min:900,  max:2000, color:'#ff8844' },
+  { level:5, name:'LEGEND',      min:2000, max:4500, color:'#ff44dd' },
+  { level:6, name:'MYTHIC',      min:4500, max:Infinity, color:'#ffd700' },
+];
+
+const BADGES = [
+  { id:'first_blood', name:'First Point!',    icon:'⭐', desc:'Earn your very first point',              check:s=>s.totalEarned>=1 },
+  { id:'ten',         name:'Ten Up',          icon:'💫', desc:'Earn 10 total points',                    check:s=>s.totalEarned>=10 },
+  { id:'century',     name:'Century Club',    icon:'💯', desc:'Earn 100 total points',                   check:s=>s.totalEarned>=100 },
+  { id:'five_hundo',  name:'Big Earner',      icon:'💰', desc:'Earn 500 total points',                   check:s=>s.totalEarned>=500 },
+  { id:'thousandaire',name:'Thousandaire',    icon:'👑', desc:'Earn 1,000 total points',                 check:s=>s.totalEarned>=1000 },
+  { id:'streak3',     name:'On Fire!',        icon:'🔥', desc:'3-day streak',                            check:s=>s.streak>=3 },
+  { id:'streak7',     name:'Week Warrior',    icon:'🌟', desc:'7 days in a row!',                        check:s=>s.streak>=7 },
+  { id:'streak30',    name:'Unstoppable',     icon:'⚡', desc:'30-day streak — legendary!',              check:s=>s.streak>=30 },
+  { id:'first_buy',   name:'First Reward!',   icon:'🛍️', desc:'Spend points on a reward',               check:s=>s.history.some(h=>h.type==='spend') },
+  { id:'lego_life',   name:'Lego Life',       icon:'🧱', desc:'Redeem a Lego reward',                   check:s=>s.history.some(h=>h.type==='spend'&&h.rid&&h.rid.includes('lego')) },
+  { id:'gamer',       name:'Gamer',           icon:'🕹️', desc:'Redeem a video game',                    check:s=>s.history.some(h=>h.type==='spend'&&h.rid==='videogame') },
+  { id:'shopaholic',  name:'Shopaholic',      icon:'🏪', desc:'Spend points 5 times',                   check:s=>s.history.filter(h=>h.type==='spend').length>=5 },
+];
+
+const BEHAVIORS = [
+  { id:'listening', label:'Listening in class', max:10 },
+  { id:'homework',  label:'Homework done',       max:10 },
+  { id:'behavior',  label:'Good behavior',       max:10 },
+  { id:'attitude',  label:'Positive attitude',   max:5  },
+  { id:'bonus',     label:'Bonus / extra effort', max:5  },
+];
+
+// ─── SOUND ENGINE ──────────────────────────────────────────────────────────
+let _actx = null;
+function actx(){ if(!_actx) _actx=new(window.AudioContext||window.webkitAudioContext)(); return _actx; }
+function tone(freq,dur,type='square',vol=0.25,delay=0){
+  try{
+    const c=actx(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type=type;o.frequency.setValueAtTime(freq,c.currentTime+delay);
+    g.gain.setValueAtTime(vol,c.currentTime+delay);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+delay+dur);
+    o.start(c.currentTime+delay);o.stop(c.currentTime+delay+dur+0.01);
+  }catch(e){}
+}
+const SFX = {
+  coin:    ()=>{ tone(660,.08,'square',.28); tone(880,.12,'square',.28,.09); },
+  bigcoin: ()=>{ [523,659,784,1047].forEach((f,i)=>tone(f,.1,'square',.3,i*.08)); },
+  levelup: ()=>{ [262,330,392,523,659,784,1047].forEach((f,i)=>tone(f,.13,'square',.35,i*.09)); },
+  buy:     ()=>{ [784,988,1175].forEach((f,i)=>tone(f,.1,'square',.3,i*.07)); tone(1568,.3,'square',.3,.21); },
+  error:   ()=>{ tone(220,.15,'sawtooth',.3); tone(180,.25,'sawtooth',.3,.12); },
+  streak:  ()=>{ [392,523,659,784,988,1175].forEach((f,i)=>tone(f,.1,'square',.28,i*.07)); },
+  badge:   ()=>{ [659,784,988].forEach((f,i)=>tone(f,.1,'square',.28,i*.08)); },
+};
+
+// ─── CONFETTI ──────────────────────────────────────────────────────────────
+let cParts=[], cRaf=null;
+function launchConfetti(n=80){
+  const canvas=document.getElementById('confetti-canvas');
+  if(!canvas)return;
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const cols=['#ffd700','#ff4455','#00ff88','#4488ff','#ff44dd','#ffaa00','#00ffff','#ff8844'];
+  for(let i=0;i<n;i++) cParts.push({
+    x:Math.random()*canvas.width, y:-20,
+    vx:(Math.random()-.5)*9, vy:Math.random()*5+2,
+    col:cols[Math.floor(Math.random()*cols.length)],
+    w:Math.random()*12+5, h:Math.random()*7+3,
+    rot:Math.random()*360, rs:(Math.random()-.5)*12,
+    shape:Math.random()>.6?'circle':'rect',
+  });
+  if(!cRaf){
+    function animate(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      cParts=cParts.filter(p=>p.y<canvas.height+50);
+      cParts.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.vy+=0.12; p.rot+=p.rs;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+        ctx.fillStyle=p.col;
+        if(p.shape==='rect') ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+        else{ ctx.beginPath(); ctx.arc(0,0,p.w/2,0,Math.PI*2); ctx.fill(); }
+        ctx.restore();
+      });
+      if(cParts.length>0) cRaf=requestAnimationFrame(animate);
+      else{ cRaf=null; ctx.clearRect(0,0,canvas.width,canvas.height); }
+    }
+    animate();
+  }
+}
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+const SK = 'pointorama_v3';
+const DEF = {
+  points:0, totalEarned:0,
+  history:[], badges:[], parentPin:'1234',
+  tweaks:TWEAK_DEFAULTS,
+};
+function load(){ try{ const s=localStorage.getItem(SK); return s?{...DEF,...JSON.parse(s)}:DEF; }catch{ return DEF; } }
+function save(s){ localStorage.setItem(SK,JSON.stringify(s)); }
+function getLevel(pts){ return LEVELS.find(l=>pts>=l.min&&pts<l.max)||LEVELS[LEVELS.length-1]; }
+function checkBadges(st){ return BADGES.filter(b=>!st.badges.includes(b.id)&&b.check(st)).map(b=>b.id); }
+
+// ─── HOME SCREEN ───────────────────────────────────────────────────────────
+function HomeScreen({ state, dispatch }){
+  const lv = getLevel(state.totalEarned);
+  const next = LEVELS.find(l=>l.level===lv.level+1);
+  const pct = next ? Math.min(100,((state.totalEarned-lv.min)/(next.min-lv.min))*100) : 100;
+
+  return (
+    <div className="screen">
+      {/* Player header */}
+      <div style={{textAlign:'center',paddingTop:28,paddingBottom:14}}>
+        <div style={{fontFamily:'var(--pixel)',fontSize:11,color:'var(--dim)',letterSpacing:4,marginBottom:14}}>PLAYER 1</div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:36,color:lv.color,textShadow:`0 0 20px ${lv.color},0 0 40px ${lv.color}55`,marginBottom:12,animation:'float 3s ease-in-out infinite'}}>
+          {state.tweaks.playerName.toUpperCase()}
+        </div>
+        <div style={{display:'inline-flex',alignItems:'center',gap:12,padding:'8px 20px',border:`2px solid ${lv.color}`,background:`${lv.color}11`,borderRadius:2}}>
+          <span style={{fontFamily:'var(--pixel)',fontSize:11,color:lv.color}}>LVL {lv.level}</span>
+          <span style={{fontFamily:'var(--pixel)',fontSize:11,color:'var(--dim)'}}>·</span>
+          <span style={{fontFamily:'var(--pixel)',fontSize:11,color:lv.color}}>{lv.name}</span>
+        </div>
+      </div>
+
+      {/* Big points display */}
+      <div className="pcard pcard-gold" style={{textAlign:'center',padding:'36px 16px',marginBottom:14}}>
+        <div style={{fontFamily:'var(--pixel)',fontSize:10,color:'var(--dim)',letterSpacing:3,marginBottom:14}}>CURRENT POINTS</div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:64,color:'var(--gold)',animation:'glow-pulse 2.5s ease-in-out infinite',lineHeight:1}}>
+          {state.points.toLocaleString()}
+        </div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)',marginTop:14}}>⭐ {state.totalEarned.toLocaleString()} EARNED TOTAL</div>
+      </div>
+
+      {/* Level progress */}
+      <div className="pcard">
+        <div style={{display:'flex',justifyContent:'space-between',fontFamily:'var(--pixel)',fontSize:10,marginBottom:10}}>
+          <span style={{color:lv.color}}>{lv.name}</span>
+          <span style={{color:'var(--dim)'}}>{next?next.name:'MAX LEVEL 🏆'}</span>
+        </div>
+        <div className="ptrack" style={{height:20,marginBottom:8}}>
+          <div className="pfill" style={{width:`${pct}%`,background:`linear-gradient(90deg,${lv.color}88,${lv.color})`,boxShadow:`0 0 10px ${lv.color}99`}}/>
+        </div>
+        {next && <div style={{textAlign:'right',fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)'}}>
+          {(next.min-state.totalEarned).toLocaleString()} pts to {next.name}
+        </div>}
+      </div>
+
+      {/* Recent activity */}
+      {state.history.length>0&&(
+        <div className="pcard">
+          <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)',marginBottom:12,letterSpacing:2}}>RECENT ACTIVITY</div>
+          {state.history.slice(0,5).map((h,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:14,padding:'12px 0',borderBottom:i<4&&i<state.history.length-1?'1px solid var(--bg3)':'none'}}>
+              <div style={{fontSize:24,width:36,textAlign:'center'}}>{h.type==='earn'?'⭐':'🛍️'}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:16,fontWeight:700,color:'var(--text)'}}>{h.reason}</div>
+                <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',marginTop:4}}>{h.date}</div>
+              </div>
+              <div style={{fontFamily:'var(--pixel)',fontSize:16,color:h.type==='earn'?'var(--green)':'var(--red)',minWidth:60,textAlign:'right'}}>
+                {h.type==='earn'?'+':'-'}{h.amount}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {state.history.length===0&&(
+        <div style={{textAlign:'center',padding:'40px 0',fontFamily:'var(--pixel)',fontSize:10,color:'var(--dim)',lineHeight:3}}>
+          NO POINTS YET!<br/>ASK A PARENT TO<br/>AWARD YOUR FIRST POINTS!
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SHOP SCREEN ───────────────────────────────────────────────────────────
+function ShopScreen({ state, dispatch }){
+  const [confirm, setConfirm]=useState(null);
+  const [justBought, setJustBought]=useState(null);
+
+  function tryBuy(r){
+    if(state.points<r.cost){ SFX.error(); return; }
+    SFX.coin(); setConfirm(r);
+  }
+  function doBuy(r){
+    dispatch({type:'SPEND',reward:r});
+    setConfirm(null); setJustBought(r);
+    SFX.buy(); launchConfetti(200);
+    setTimeout(()=>setJustBought(null),3500);
+  }
+
+  if(justBought) return (
+    <div className="screen" style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'80vh'}}>
+      <div style={{fontSize:88,marginBottom:20,animation:'pop-in 0.5s ease-out'}}>{justBought.icon}</div>
+      <div style={{fontFamily:'var(--pixel)',fontSize:13,color:'var(--gold)',textAlign:'center',marginBottom:10,animation:'glow-pulse 1s infinite'}}>REWARD UNLOCKED!</div>
+      <div style={{fontFamily:'var(--pixel)',fontSize:10,color:'var(--text)',textAlign:'center',marginBottom:8}}>{justBought.name}</div>
+      <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',textAlign:'center'}}>GO FIND A PARENT TO REDEEM!</div>
+    </div>
+  );
+
+  return (
+    <div className="screen">
+      <div style={{paddingTop:20,marginBottom:16}}>
+        <div style={{fontFamily:'var(--pixel)',fontSize:18,color:'var(--gold)'}}>🛍️ REWARD SHOP</div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:11,color:'var(--dim)',marginTop:8}}>YOU HAVE ⭐ {state.points.toLocaleString()} POINTS</div>
+      </div>
+
+      {confirm&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.88)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:600,padding:24}}>
+          <div className="pcard" style={{width:'100%',maxWidth:320,textAlign:'center',animation:'pop-in 0.3s ease-out',padding:24}}>
+            <div style={{fontSize:64,marginBottom:16}}>{confirm.icon}</div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:11,color:'var(--gold)',marginBottom:8}}>BUY THIS?</div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--text)',marginBottom:6}}>{confirm.name}</div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--red)',marginBottom:6}}>COST: {confirm.cost} ⭐</div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:7,color:'var(--dim)',marginBottom:20}}>{confirm.desc}</div>
+            <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+              <button className="pbtn pbtn-gold" onClick={()=>doBuy(confirm)}>YES!</button>
+              <button className="pbtn pbtn-dim" onClick={()=>setConfirm(null)}>BACK</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:14}}>
+        {REWARDS.map(r=>{
+          const can=state.points>=r.cost;
+          return (
+            <div key={r.id} className="pcard" onClick={()=>tryBuy(r)}
+              style={{cursor:'pointer',textAlign:'center',padding:14,
+                border:can?'2px solid rgba(255,215,0,0.3)':'2px solid var(--bg3)',
+                opacity:can?1:0.55,transition:'transform 0.15s,border-color 0.2s',position:'relative'}}
+              onMouseEnter={e=>{if(can)e.currentTarget.style.transform='scale(1.04)'; }}
+              onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+              {can&&<div style={{position:'absolute',top:4,right:4,width:8,height:8,borderRadius:'50%',background:'var(--green)',boxShadow:'0 0 6px var(--green)'}}/>}
+              <div style={{fontSize:48,marginBottom:12}}>{r.icon}</div>
+              <div style={{fontFamily:'var(--pixel)',fontSize:9,marginBottom:8,lineHeight:1.8,color:'var(--text)'}}>{r.name}</div>
+              <div style={{fontFamily:'var(--pixel)',fontSize:14,color:can?'var(--gold)':'var(--dim)'}}>{r.cost} ⭐</div>
+              {!can&&<div style={{fontFamily:'var(--pixel)',fontSize:7,color:'var(--red)',marginTop:6}}>
+                NEED {(r.cost-state.points).toLocaleString()} MORE
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── HISTORY SCREEN ────────────────────────────────────────────────────────
+function HistoryScreen({ state }){
+  const earned=state.history.filter(h=>h.type==='earn').reduce((s,h)=>s+h.amount,0);
+  const spent=state.history.filter(h=>h.type==='spend').reduce((s,h)=>s+h.amount,0);
+  return (
+    <div className="screen">
+      <div style={{paddingTop:20,marginBottom:16}}>
+        <div style={{fontFamily:'var(--pixel)',fontSize:18,color:'var(--gold)',marginBottom:16}}>📜 POINT LOG</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+          <div className="pcard pcard-green" style={{textAlign:'center',padding:20}}>
+            <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)',marginBottom:10}}>TOTAL EARNED</div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:28,color:'var(--green)'}}>{state.totalEarned.toLocaleString()}</div>
+          </div>
+          <div className="pcard" style={{textAlign:'center',padding:20,borderColor:'rgba(255,68,85,0.25)',background:'rgba(255,68,85,0.04)'}}>
+            <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)',marginBottom:10}}>TOTAL SPENT</div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:28,color:'var(--red)'}}>{spent.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+      {state.history.length===0
+        ? <div style={{textAlign:'center',fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',paddingTop:60,lineHeight:3}}>
+            NO HISTORY YET!<br/>GET EARNING!
+          </div>
+        : state.history.map((h,i)=>(
+          <div key={i} className="pcard" style={{display:'flex',alignItems:'center',gap:16,padding:'16px 20px'}}>
+            <div style={{fontSize:28,width:40,textAlign:'center'}}>{h.type==='earn'?'⭐':'🛍️'}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:18,fontWeight:700}}>{h.reason}</div>
+              <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)',marginTop:5}}>{h.date}</div>
+            </div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:18,color:h.type==='earn'?'var(--green)':'var(--red)',minWidth:60,textAlign:'right'}}>
+              {h.type==='earn'?'+':'-'}{h.amount}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  );
+}
+
+// ─── BADGES SCREEN ─────────────────────────────────────────────────────────
+function BadgesScreen({ state }){
+  const unlocked=state.badges.length;
+  return (
+    <div className="screen">
+      <div style={{paddingTop:20,marginBottom:4}}>
+        <div style={{fontFamily:'var(--pixel)',fontSize:18,color:'var(--gold)'}}>🏅 ACHIEVEMENTS</div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:10,color:'var(--dim)',marginTop:8,marginBottom:14}}>
+          {unlocked}/{BADGES.length} UNLOCKED
+          {unlocked===BADGES.length&&' — COMPLETE! 🎉'}
+        </div>
+        <div className="ptrack" style={{marginBottom:14}}>
+          <div className="pfill" style={{width:`${(unlocked/BADGES.length)*100}%`,background:'linear-gradient(90deg,var(--gold)88,var(--gold))',boxShadow:'0 0 10px rgba(255,215,0,0.5)'}}/>
+        </div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:14}}>
+        {BADGES.map(b=>{
+          const on=state.badges.includes(b.id);
+          return (
+            <div key={b.id} className="pcard" style={{textAlign:'center',padding:14,
+              border:on?'2px solid rgba(255,215,0,0.4)':'2px solid var(--bg3)',
+              background:on?'rgba(255,215,0,0.05)':'var(--bg2)',
+              opacity:on?1:0.4,transition:'all 0.3s',
+              ...(on?{animation:'pop-in-up 0.4s ease-out'}:{})}}>
+              <div style={{fontSize:44,marginBottom:10,filter:on?'none':'grayscale(1)'}}>{b.icon}</div>
+              <div style={{fontFamily:'var(--pixel)',fontSize:8,lineHeight:1.8,marginBottom:6,color:'var(--text)'}}>{b.name}</div>
+              <div style={{fontSize:13,color:'var(--dim)',lineHeight:1.5}}>{b.desc}</div>
+              {on&&<div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--gold)',marginTop:10}}>✓ UNLOCKED</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── PARENT PANEL ──────────────────────────────────────────────────────────
+function ParentPanel({ state, dispatch, onClose }){
+  const [pin,setPin]=useState('');
+  const [open,setOpen]=useState(false);
+  const [err,setErr]=useState('');
+  const [ptab,setPtab]=useState('daily');
+  const [scores,setScores]=useState({listening:8,homework:8,behavior:8,attitude:4,bonus:0});
+  const [amt,setAmt]=useState('');
+  const [reason,setReason]=useState('');
+  const [newPin,setNewPin]=useState('');
+  const [saved,setSaved]=useState('');
+
+  const daily=Object.entries(scores).reduce((s,[k,v])=>s+v,0);
+
+  function unlock(){
+    if(pin===state.parentPin){ setOpen(true); setErr(''); }
+    else{ setErr('WRONG PIN!'); SFX.error(); }
+  }
+  function submitDaily(){
+    dispatch({type:'ADD_DAILY',amount:daily,reason:'📊 Daily School Report'});
+    SFX.bigcoin(); launchConfetti(180); onClose();
+  }
+  function submitCustom(){
+    const n=parseInt(amt);
+    if(!n||n<=0){ SFX.error(); return; }
+    dispatch({type:'ADD_POINTS',amount:n,reason:reason||'⭐ Bonus Points'});
+    SFX.coin(); launchConfetti(80); setAmt(''); setReason('');
+    setSaved(`+${n} points awarded!`); setTimeout(()=>setSaved(''),2500);
+  }
+
+  if(!open) return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:700,padding:24}}>
+      <div className="pcard" style={{width:'100%',maxWidth:320,textAlign:'center',padding:28,animation:'pop-in 0.3s ease-out'}}>
+        <div style={{fontSize:40,marginBottom:16}}>🔒</div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:10,color:'var(--gold)',marginBottom:20}}>PARENT PANEL</div>
+        <input type="password" value={pin} onChange={e=>setPin(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&unlock()} placeholder="Enter PIN" style={{textAlign:'center',marginBottom:err?8:16,letterSpacing:6,fontSize:18}}/>
+        {err&&<div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--red)',marginBottom:12,animation:'shake 0.4s ease'}}>{err}</div>}
+        <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+          <button className="pbtn pbtn-gold" onClick={unlock}>UNLOCK</button>
+          <button className="pbtn pbtn-dim" onClick={onClose}>CANCEL</button>
+        </div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:7,color:'var(--dim)',marginTop:16}}>DEFAULT PIN: 1234</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'var(--bg)',zIndex:700,overflowY:'auto'}}>
+      <div style={{maxWidth:860,margin:'0 auto',padding:28,paddingBottom:40}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:12,marginBottom:18}}>
+          <div style={{fontFamily:'var(--pixel)',fontSize:10,color:'var(--gold)'}}>🔑 PARENT PANEL</div>
+          <button className="pbtn pbtn-red" style={{fontSize:8,padding:'8px 12px'}} onClick={onClose}>CLOSE</button>
+        </div>
+
+        {/* Tabs */}
+        <div style={{display:'flex',gap:6,marginBottom:16}}>
+          {['daily','custom','settings'].map(t=>(
+            <button key={t} onClick={()=>setPtab(t)} style={{flex:1,fontFamily:'var(--pixel)',fontSize:11,
+              padding:'14px 8px',background:ptab===t?'var(--gold)':'var(--bg2)',
+              color:ptab===t?'#1a0600':'var(--dim)',border:`2px solid ${ptab===t?'var(--gold)':'var(--bg3)'}`,
+              cursor:'pointer',borderRadius:2,transition:'all 0.2s'}}>
+              {t==='daily'?'📊 DAILY':t==='custom'?'⭐ BONUS':'⚙️ SETUP'}
+            </button>
+          ))}
+        </div>
+
+        {ptab==='daily'&&(
+          <div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',marginBottom:14,letterSpacing:2}}>RATE TODAY AT SCHOOL</div>
+            {BEHAVIORS.map(b=>(
+              <div key={b.id} className="pcard" style={{padding:'12px 14px',marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <span style={{fontSize:17,fontWeight:700}}>{b.label}</span>
+                  <span style={{fontFamily:'var(--pixel)',fontSize:16,color:'var(--gold)'}}>{scores[b.id]}<span style={{color:'var(--dim)',fontSize:11}}>/{b.max}</span></span>
+                </div>
+                <input type="range" min={0} max={b.max} value={scores[b.id]}
+                  onChange={e=>setScores(s=>({...s,[b.id]:+e.target.value}))}/>
+              </div>
+            ))}
+            <div className="pcard pcard-gold" style={{textAlign:'center',padding:16,marginBottom:12}}>
+              <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)',marginBottom:6}}>TOTAL TO AWARD</div>
+              <div style={{fontFamily:'var(--pixel)',fontSize:36,color:'var(--gold)',animation:'glow-pulse 2s infinite'}}>{daily}</div>
+              <div style={{fontFamily:'var(--pixel)',fontSize:7,color:'var(--dim)',marginTop:4}}>OUT OF 40 MAX</div>
+            </div>
+            <button className="pbtn pbtn-gold" style={{width:'100%',padding:20,fontSize:14}} onClick={submitDaily}>
+              ⭐ AWARD {daily} POINTS TO SAM!
+            </button>
+          </div>
+        )}
+
+        {ptab==='custom'&&(
+          <div>
+            <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',marginBottom:14,letterSpacing:2}}>QUICK ADD</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:16}}>
+              {[5,10,15,20,25,30,50,100].map(n=>(
+                <button key={n} className="pbtn pbtn-green" style={{fontSize:11,padding:'14px 8px'}}
+                  onClick={()=>{ dispatch({type:'ADD_POINTS',amount:n,reason:'⭐ Bonus'}); SFX.coin(); launchConfetti(60); setSaved(`+${n} awarded!`); setTimeout(()=>setSaved(''),2000); }}>
+                  +{n}
+                </button>
+              ))}
+            </div>
+            <div className="pcard">
+              <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',marginBottom:10}}>CUSTOM AMOUNT</div>
+              <input type="number" value={amt} onChange={e=>setAmt(e.target.value)} placeholder="Points amount" style={{marginBottom:8}}/>
+              <input type="text" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Reason (optional)" style={{marginBottom:12}}/>
+              <button className="pbtn pbtn-gold" style={{width:'100%'}} onClick={submitCustom}>AWARD POINTS</button>
+            </div>
+            {saved&&<div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--green)',textAlign:'center',marginTop:12,animation:'pop-in 0.3s ease-out'}}>{saved}</div>}
+          </div>
+        )}
+
+        {ptab==='settings'&&(
+          <div>
+            <div className="pcard" style={{marginBottom:10}}>
+              <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',marginBottom:10}}>PLAYER NAME</div>
+              <input type="text" defaultValue={state.tweaks.playerName}
+                onChange={e=>dispatch({type:'SET_NAME',name:e.target.value})} style={{marginBottom:8}}/>
+            </div>
+            <div className="pcard" style={{marginBottom:10}}>
+              <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',marginBottom:10}}>CHANGE PIN</div>
+              <input type="password" value={newPin} onChange={e=>setNewPin(e.target.value)} placeholder="New 4-digit PIN" style={{marginBottom:8}}/>
+              <button className="pbtn pbtn-gold" onClick={()=>{ if(newPin){ dispatch({type:'SET_PIN',pin:newPin}); setNewPin(''); setSaved('PIN SAVED!'); setTimeout(()=>setSaved(''),2000); } }}>
+                SAVE PIN
+              </button>
+              {saved&&<div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--green)',marginTop:8}}>{saved}</div>}
+            </div>
+            <div className="pcard" style={{borderColor:'rgba(255,68,85,0.3)',background:'rgba(255,68,85,0.04)'}}>
+              <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--red)',marginBottom:10}}>⚠️ DANGER ZONE</div>
+              <button className="pbtn pbtn-red" onClick={()=>{ if(window.confirm('Reset ALL data? This cannot be undone.')) dispatch({type:'RESET'}); }}>
+                RESET ALL DATA
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── LEVEL UP OVERLAY ──────────────────────────────────────────────────────
+function LevelUpOverlay({ level, onDone }){
+  useEffect(()=>{ SFX.levelup(); launchConfetti(300); const t=setTimeout(onDone,5000); return ()=>clearTimeout(t); },[]);
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.96)',display:'flex',flexDirection:'column',
+      alignItems:'center',justifyContent:'center',zIndex:900,cursor:'pointer'}} onClick={onDone}>
+      <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--dim)',letterSpacing:6,marginBottom:20}}>LEVEL UP!</div>
+      <div style={{fontFamily:'var(--pixel)',fontSize:64,color:level.color,
+        textShadow:`0 0 30px ${level.color},0 0 80px ${level.color}`,
+        animation:'glow-pulse 0.4s ease-in-out infinite,float 2s ease-in-out infinite',marginBottom:12}}>
+        {level.level}
+      </div>
+      <div style={{fontFamily:'var(--pixel)',fontSize:22,color:level.color,marginBottom:36,
+        textShadow:`0 0 20px ${level.color}`}}>{level.name}</div>
+      <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--dim)',animation:'level-flash 1s infinite'}}>TAP TO CONTINUE</div>
+    </div>
+  );
+}
+
+// ─── BADGE TOAST ───────────────────────────────────────────────────────────
+function BadgeToast({ badge, onDone }){
+  useEffect(()=>{ SFX.badge(); const t=setTimeout(onDone,3500); return ()=>clearTimeout(t); },[]);
+  return (
+    <div style={{position:'fixed',bottom:90,left:'50%',transform:'translateX(-50%)',
+      background:'var(--bg2)',border:'2px solid var(--gold)',padding:'14px 20px',
+      display:'flex',alignItems:'center',gap:14,zIndex:800,minWidth:270,
+      animation:'pop-in 0.4s ease-out',borderRadius:3,boxShadow:'0 0 30px rgba(255,215,0,0.3)'}}>
+      <div style={{fontSize:32}}>{badge.icon}</div>
+      <div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:8,color:'var(--gold)',marginBottom:5}}>BADGE UNLOCKED!</div>
+        <div style={{fontFamily:'var(--pixel)',fontSize:7,color:'var(--text)'}}>{badge.name}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ROOT APP ──────────────────────────────────────────────────────────────
+function App(){
+  const [state,setState]=useState(load);
+  const [tab,setTab]=useState('home');
+  const [showParent,setShowParent]=useState(false);
+  const [levelUp,setLevelUp]=useState(null);
+  const [badgeToast,setBadgeToast]=useState(null);
+  const [floats,setFloats]=useState([]);
+  const [showTweaks,setShowTweaks]=useState(false);
+
+  useEffect(()=>{ save(state); },[state]);
+
+  useEffect(()=>{
+    const h=e=>{
+      if(e.data?.type==='__activate_edit_mode') setShowTweaks(true);
+      if(e.data?.type==='__deactivate_edit_mode') setShowTweaks(false);
+    };
+    window.addEventListener('message',h);
+    window.parent.postMessage({type:'__edit_mode_available'},'*');
+    return ()=>window.removeEventListener('message',h);
+  },[]);
+
+  function addFloat(text){
+    const id=Date.now()+Math.random();
+    setFloats(f=>[...f,{id,text}]);
+    setTimeout(()=>setFloats(f=>f.filter(x=>x.id!==id)),1600);
+  }
+
+  function dispatch(action){
+    setState(prev=>{
+      let next={...prev};
+      if(action.type==='ADD_POINTS'||action.type==='ADD_DAILY'){
+        const prevLv=getLevel(prev.totalEarned);
+        next.points=prev.points+action.amount;
+        next.totalEarned=prev.totalEarned+action.amount;
+        // Streak: only update once per day
+        const today=new Date().toDateString();
+        if(action.type==='ADD_DAILY'||prev.lastDate!==today){
+          const yesterday=new Date(Date.now()-86400000).toDateString();
+          const ns=prev.lastDate===yesterday?prev.streak+1:1;
+          next.streak=ns; next.longestStreak=Math.max(prev.longestStreak||0,ns);
+          next.lastDate=today;
+          if(ns>1&&ns%3===0) setTimeout(()=>SFX.streak(),300);
+        }
+        next.history=[{type:'earn',amount:action.amount,reason:action.reason,date:new Date().toLocaleDateString()},...prev.history].slice(0,100);
+        const newLv=getLevel(next.totalEarned);
+        if(newLv.level>prevLv.level) setTimeout(()=>setLevelUp(newLv),600);
+        setTimeout(()=>addFloat(`+${action.amount} ⭐`),100);
+      }
+      if(action.type==='SPEND'){
+        if(prev.points<action.reward.cost) return prev;
+        next.points=prev.points-action.reward.cost;
+        next.history=[{type:'spend',amount:action.reward.cost,reason:`${action.reward.icon} ${action.reward.name}`,rid:action.reward.id,date:new Date().toLocaleDateString()},...prev.history].slice(0,100);
+      }
+      if(action.type==='SET_PIN') next.parentPin=action.pin;
+      if(action.type==='SET_NAME') next.tweaks={...prev.tweaks,playerName:action.name};
+      if(action.type==='RESET') return{...DEF};
+      // Badge check
+      const newB=checkBadges(next);
+      if(newB.length>0){
+        next.badges=[...prev.badges,...newB];
+        const b=BADGES.find(x=>x.id===newB[0]);
+        if(b) setTimeout(()=>setBadgeToast(b),900);
+      }
+      return next;
+    });
+  }
+
+  const NAV=[
+    {id:'home',  label:'HOME',   icon:'🏠'},
+    {id:'shop',  label:'SHOP',   icon:'🛍️'},
+    {id:'log',   label:'LOG',    icon:'📜'},
+    {id:'badges',label:'BADGES', icon:'🏅'},
+  ];
+
+  return (
+    <>
+      {levelUp&&<LevelUpOverlay level={levelUp} onDone={()=>setLevelUp(null)}/>}
+      {badgeToast&&<BadgeToast badge={badgeToast} onDone={()=>setBadgeToast(null)}/>}
+
+      {floats.map(f=>(
+        <div key={f.id} className="float-text" style={{left:'50%',top:'40%'}}>{f.text}</div>
+      ))}
+
+      {showParent&&<ParentPanel state={state} dispatch={dispatch} onClose={()=>setShowParent(false)}/>}
+
+      {/* Secret parent access */}
+      <button onClick={()=>setShowParent(true)} title="Parent Panel"
+        style={{position:'fixed',top:14,right:16,background:'none',border:'none',fontSize:22,
+          cursor:'pointer',zIndex:300,opacity:0.2,lineHeight:1,padding:6}}>🔒</button>
+
+      {tab==='home'  &&<HomeScreen   state={state} dispatch={dispatch}/>}
+      {tab==='shop'  &&<ShopScreen   state={state} dispatch={dispatch}/>}
+      {tab==='log'   &&<HistoryScreen state={state}/>}
+      {tab==='badges'&&<BadgesScreen  state={state}/>}
+
+      <nav className="nav">
+        {NAV.map(n=>(
+          <button key={n.id} className={`navbtn${tab===n.id?' active':''}`} onClick={()=>setTab(n.id)}>
+            <span className="navicon">{n.icon}</span>
+            {n.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* Tweaks panel */}
+      {showTweaks&&(
+        <div style={{position:'fixed',bottom:80,right:12,background:'var(--bg2)',
+          border:'2px solid var(--gold)',padding:16,zIndex:600,minWidth:210,borderRadius:3,
+          boxShadow:'0 0 20px rgba(255,215,0,0.2)'}}>
+          <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--gold)',marginBottom:14}}>TWEAKS</div>
+          <label style={{display:'block',fontFamily:'var(--pixel)',fontSize:7,color:'var(--dim)',marginBottom:12}}>
+            PLAYER NAME
+            <input type="text" defaultValue={state.tweaks.playerName} style={{marginTop:6,fontSize:10}}
+              onChange={e=>{
+                dispatch({type:'SET_NAME',name:e.target.value});
+                window.parent.postMessage({type:'__edit_mode_set_keys',edits:{playerName:e.target.value}},'*');
+              }}/>
+          </label>
+          <label style={{display:'flex',alignItems:'center',gap:8,fontFamily:'var(--pixel)',fontSize:7,color:'var(--dim)',cursor:'pointer'}}>
+            <input type="checkbox" defaultChecked={state.tweaks.soundEnabled}
+              onChange={e=>window.parent.postMessage({type:'__edit_mode_set_keys',edits:{soundEnabled:e.target.checked}},'*')}
+              style={{accentColor:'var(--gold)',width:16,height:16}}/>
+            SOUNDS
+          </label>
+        </div>
+      )}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

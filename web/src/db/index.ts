@@ -13,6 +13,9 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
 
+  // Column migrations must run before any SQL that references new columns
+  try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN weekly_money_cents INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
+
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS points_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,12 +53,8 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
       note TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-    -- Seed the single settings row if missing
     INSERT OR IGNORE INTO allowance_settings (id, weekly_amount, weekly_money_cents, enabled) VALUES (1, 0, 0, 0);
   `);
-
-  // Idempotent column migration for existing databases
-  try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN weekly_money_cents INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
 
   _db = drizzle(sqlite, { schema });
   return _db;

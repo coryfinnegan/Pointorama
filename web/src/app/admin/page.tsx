@@ -113,12 +113,14 @@ export default function AdminPage() {
 
   const [fetchedNoImage, setFetchedNoImage] = useState(false);
   const [fetchedPriceCents, setFetchedPriceCents] = useState<number | null>(null);
+  const [manualPriceDollars, setManualPriceDollars] = useState("");
 
   async function fetchMeta() {
     if (!linkUrl) return;
     setFetchingMeta(true);
     setFetchedNoImage(false);
     setFetchedPriceCents(null);
+    setManualPriceDollars("");
     try {
       const res = await fetch("/api/prizes/fetch-meta", {
         method: "POST",
@@ -136,6 +138,7 @@ export default function AdminPage() {
       if (data.description) setPrizeDesc(data.description);
       if (data.priceCents) {
         setFetchedPriceCents(data.priceCents);
+        setManualPriceDollars((data.priceCents / 100).toFixed(2));
         const rate = Number(alRate) || 10;
         setPrizeCost(String(Math.round(data.priceCents / 100 * rate)));
       }
@@ -166,7 +169,7 @@ export default function AdminPage() {
 
   function resetPrizeForm() {
     setPrizeName(""); setPrizeDesc(""); setPrizeCost(""); setPrizeImg("");
-    setLinkUrl(""); setUploadPreview(""); setFetchedNoImage(false);
+    setLinkUrl(""); setUploadPreview(""); setFetchedNoImage(false); setFetchedPriceCents(null); setManualPriceDollars("");
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -406,6 +409,33 @@ export default function AdminPage() {
                     />
                   </div>
                 )}
+                {/* Price → points converter, always visible in link mode */}
+                {prizeName && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ fontFamily: "var(--pixel)", fontSize: 13, color: "var(--green)", flexShrink: 0 }}>$</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder={fetchedPriceCents ? (fetchedPriceCents / 100).toFixed(2) : "Enter price..."}
+                      value={manualPriceDollars}
+                      onChange={(e) => {
+                        setManualPriceDollars(e.target.value);
+                        setFetchedPriceCents(null);
+                        const dollars = parseFloat(e.target.value);
+                        if (!isNaN(dollars) && dollars > 0) {
+                          setPrizeCost(String(Math.round(dollars * (Number(alRate) || 10))));
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                    {manualPriceDollars && (
+                      <span style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--gold)", flexShrink: 0 }}>
+                        = {Math.round(parseFloat(manualPriceDollars) * (Number(alRate) || 10))} pts
+                      </span>
+                    )}
+                  </div>
+                )}
               </>
             )}
             {addMode === "manual" && (
@@ -425,14 +455,7 @@ export default function AdminPage() {
             )}
             <input type="text" placeholder="Prize name" value={prizeName} onChange={(e) => setPrizeName(e.target.value)} required />
             <textarea placeholder="Description (optional)" value={prizeDesc} onChange={(e) => setPrizeDesc(e.target.value)} rows={2} style={{ fontFamily: "var(--pixel)", fontSize: 10, resize: "vertical" }} />
-            <div>
-              <input type="number" placeholder="Point cost" min={1} value={prizeCost} onChange={(e) => { setPrizeCost(e.target.value); setFetchedPriceCents(null); }} required style={{ width: "100%" }} />
-              {fetchedPriceCents !== null && (
-                <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--green)", marginTop: 5 }}>
-                  💲 ${(fetchedPriceCents / 100).toFixed(2)} × {alRate} pts/$1 = {Math.round(fetchedPriceCents / 100 * (Number(alRate) || 10))} pts
-                </div>
-              )}
-            </div>
+            <input type="number" placeholder="Point cost" min={1} value={prizeCost} onChange={(e) => { setPrizeCost(e.target.value); setFetchedPriceCents(null); }} required />
             <button type="submit" className="pbtn pbtn-gold" style={{ width: "100%" }}>ADD PRIZE</button>
           </form>
 

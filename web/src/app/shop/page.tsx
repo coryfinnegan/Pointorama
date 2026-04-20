@@ -85,30 +85,45 @@ export default function ShopPage() {
       )}
 
       {/* Confirm modal */}
-      {confirming && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 600, padding: 24 }}>
-          <div className="pcard anim-pop" style={{ width: "100%", maxWidth: 320, textAlign: "center", padding: 28 }}>
-            {confirming.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={confirming.imageUrl} alt={confirming.name} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 4, marginBottom: 16, border: "2px solid var(--gold)" }} />
-            ) : (
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🎁</div>
-            )}
-            <div style={{ fontFamily: "var(--pixel)", fontSize: 11, color: "var(--gold)", marginBottom: 8 }}>BUY THIS?</div>
-            <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--text)", marginBottom: 6 }}>{confirming.name}</div>
-            <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--red)", marginBottom: 6 }}>COST: {confirming.pointCost} ⭐</div>
-            {confirming.description && (
-              <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 20 }}>{confirming.description}</div>
-            )}
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <button className="pbtn pbtn-gold" onClick={redeem} disabled={loading}>
-                {loading ? "..." : "YES!"}
-              </button>
-              <button className="pbtn pbtn-dim" onClick={() => setConfirming(null)}>BACK</button>
+      {confirming && (() => {
+        const canAfford = available >= confirming.pointCost;
+        const need = confirming.pointCost - available;
+        return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 600, padding: 24 }}>
+            <div className="pcard anim-pop" style={{ width: "100%", maxWidth: 320, textAlign: "center", padding: 28 }}>
+              {confirming.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={confirming.imageUrl} alt={confirming.name} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 4, marginBottom: 16, border: `2px solid ${canAfford ? "var(--gold)" : "var(--bg3)"}` }} />
+              ) : (
+                <div style={{ fontSize: 64, marginBottom: 16 }}>🎁</div>
+              )}
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 11, color: canAfford ? "var(--gold)" : "var(--dim)", marginBottom: 8 }}>
+                {canAfford ? "BUY THIS?" : "🔒 LOCKED"}
+              </div>
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--text)", marginBottom: 6 }}>{confirming.name}</div>
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: canAfford ? "var(--red)" : "var(--dim)", marginBottom: 6 }}>
+                COST: {confirming.pointCost} ⭐
+              </div>
+              {!canAfford && (
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--red)", marginBottom: 6 }}>
+                  NEED {need.toLocaleString()} MORE ⭐
+                </div>
+              )}
+              {confirming.description && (
+                <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 20 }}>{confirming.description}</div>
+              )}
+              <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                {canAfford && (
+                  <button className="pbtn pbtn-gold" onClick={redeem} disabled={loading}>
+                    {loading ? "..." : "YES!"}
+                  </button>
+                )}
+                <button className="pbtn pbtn-dim" onClick={() => setConfirming(null)}>BACK</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))", gap: 14 }}>
         {prizes.map((prize) => {
@@ -117,17 +132,16 @@ export default function ShopPage() {
             <div
               key={prize.id}
               className="pcard"
-              onClick={() => { if (can) setConfirming(prize); }}
+              onClick={() => setConfirming(prize)}
               style={{
-                cursor: can ? "pointer" : "default",
+                cursor: "pointer",
                 padding: 0,
                 overflow: "hidden",
                 border: can ? "2px solid rgba(255,215,0,0.35)" : "2px solid var(--bg3)",
-                opacity: can ? 1 : 0.55,
                 transition: "transform 0.15s, border-color 0.2s",
                 marginBottom: 0,
               }}
-              onMouseEnter={(e) => { if (can) e.currentTarget.style.transform = "scale(1.04)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
             >
               {/* Image or emoji */}
@@ -137,7 +151,7 @@ export default function ShopPage() {
                   <img
                     src={prize.imageUrl}
                     alt={prize.name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", filter: can ? "none" : "grayscale(1)" }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
                   <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 52 }}>

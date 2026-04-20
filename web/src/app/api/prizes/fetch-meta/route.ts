@@ -49,6 +49,43 @@ function tryLegoUrl(url: string): { title: string; image: string } | null {
   }
 }
 
+function extractPrice(html: string): number | null {
+  // JSON-LD schema.org Product offers
+  const ldBlocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+  for (const [, body] of ldBlocks) {
+    try {
+      const data = JSON.parse(body);
+      const nodes = Array.isArray(data) ? data : [data];
+      for (const node of nodes) {
+        const offer = node?.offers ?? node?.offers?.[0];
+        const price = offer?.price ?? (Array.isArray(offer) ? offer[0]?.price : undefined);
+        if (price != null) {
+          const cents = Math.round(parseFloat(String(price)) * 100);
+          if (cents > 0) return cents;
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Amazon: <span class="a-offscreen">$XX.XX</span>
+  const offscreen = html.match(/class="a-offscreen">\$([0-9,]+\.?\d*)/);
+  if (offscreen) {
+    const cents = Math.round(parseFloat(offscreen[1].replace(/,/g, "")) * 100);
+    if (cents > 0) return cents;
+  }
+
+  // og:price:amount
+  const ogPrice =
+    html.match(/<meta[^>]+property=["']og:price:amount["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:price:amount["']/i)?.[1];
+  if (ogPrice) {
+    const cents = Math.round(parseFloat(ogPrice) * 100);
+    if (cents > 0) return cents;
+  }
+
+  return null;
+}
+
 function extractImage(html: string, url: string): string {
   // Standard og:image
   let img = extractMeta(html, "og:image:secure_url") || extractMeta(html, "og:image");
@@ -116,13 +153,14 @@ export async function POST(req: NextRequest) {
     ).trim();
 
     const image = extractImage(html, finalUrl);
+    const priceCents = extractPrice(html);
 
     const description = decodeEntities(
       extractMeta(html, "og:description") ||
       extractMeta(html, "description")
     ).trim();
 
-    return NextResponse.json({ title, image, description });
+    return NextResponse.json({ title, image, description, priceCents });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 502 });
   }

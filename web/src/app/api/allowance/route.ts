@@ -29,6 +29,9 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.weeklyMoneyCents === "number" && body.weeklyMoneyCents >= 0) {
     patch.weeklyMoneyCents = body.weeklyMoneyCents;
   }
+  if (typeof body.exchangeRate === "number" && body.exchangeRate > 0) {
+    patch.exchangeRate = body.exchangeRate;
+  }
   if (typeof body.enabled === "boolean") {
     patch.enabled = body.enabled;
     // When enabling, set nextPayAt to 7 days from now if not already set

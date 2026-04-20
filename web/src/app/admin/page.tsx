@@ -12,10 +12,11 @@ export default function AdminPage() {
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [tab, setTab] = useState<"points" | "prizes" | "pending">("points");
 
-  // Allowance
+  // Allowance + exchange rate
   const [allowance, setAllowance] = useState<AllowanceSettings | null>(null);
   const [alAmount, setAlAmount] = useState("");
-  const [alMoney, setAlMoney] = useState(""); // dollars, e.g. "5.00"
+  const [alMoney, setAlMoney] = useState("");
+  const [alRate, setAlRate] = useState("10"); // pts per $1
   const [savingAl, setSavingAl] = useState(false);
 
   // Points form
@@ -44,6 +45,7 @@ export default function AdminPage() {
     setAllowance(al);
     setAlAmount(String(al.weeklyAmount ?? 0));
     setAlMoney(al.weeklyMoneyCents ? (al.weeklyMoneyCents / 100).toFixed(2) : "");
+    setAlRate(String(al.exchangeRate ?? 10));
   }
 
   useEffect(() => { loadAll(); }, []);
@@ -58,7 +60,7 @@ export default function AdminPage() {
     const res = await fetch("/api/allowance", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weeklyAmount: amt, weeklyMoneyCents: moneyCents, enabled }),
+      body: JSON.stringify({ weeklyAmount: amt, weeklyMoneyCents: moneyCents, exchangeRate: Number(alRate) || 10, enabled }),
     });
     if (res.ok) {
       const updated = await res.json();
@@ -110,11 +112,13 @@ export default function AdminPage() {
   }
 
   const [fetchedNoImage, setFetchedNoImage] = useState(false);
+  const [fetchedPriceCents, setFetchedPriceCents] = useState<number | null>(null);
 
   async function fetchMeta() {
     if (!linkUrl) return;
     setFetchingMeta(true);
     setFetchedNoImage(false);
+    setFetchedPriceCents(null);
     try {
       const res = await fetch("/api/prizes/fetch-meta", {
         method: "POST",
@@ -130,6 +134,11 @@ export default function AdminPage() {
         setFetchedNoImage(true);
       }
       if (data.description) setPrizeDesc(data.description);
+      if (data.priceCents) {
+        setFetchedPriceCents(data.priceCents);
+        const rate = Number(alRate) || 10;
+        setPrizeCost(String(Math.round(data.priceCents / 100 * rate)));
+      }
       toast.success(data.image ? "Fetched!" : "Fetched — paste image URL below");
     } catch (err) {
       toast.error(`Could not fetch: ${err}`);
@@ -252,6 +261,25 @@ export default function AdminPage() {
               <input type="text" placeholder="Reason (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
               <button type="submit" className="pbtn pbtn-gold" style={{ width: "100%" }}>AWARD POINTS</button>
             </form>
+          </div>
+
+          {/* Exchange rate */}
+          <div className="pcard" style={{ marginBottom: 0 }}>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)", marginBottom: 12, letterSpacing: 1 }}>💱 EXCHANGE RATE</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", flexShrink: 0 }}>$1.00 =</span>
+              <input
+                type="number"
+                min={1}
+                value={alRate}
+                onChange={(e) => setAlRate(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <span style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--gold)", flexShrink: 0 }}>pts</span>
+            </div>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--dim)", marginTop: 8 }}>
+              Used when adding prizes from a link. Save via the allowance SAVE button below.
+            </div>
           </div>
 
           {/* Allowance settings */}
@@ -397,7 +425,14 @@ export default function AdminPage() {
             )}
             <input type="text" placeholder="Prize name" value={prizeName} onChange={(e) => setPrizeName(e.target.value)} required />
             <textarea placeholder="Description (optional)" value={prizeDesc} onChange={(e) => setPrizeDesc(e.target.value)} rows={2} style={{ fontFamily: "var(--pixel)", fontSize: 10, resize: "vertical" }} />
-            <input type="number" placeholder="Point cost" min={1} value={prizeCost} onChange={(e) => setPrizeCost(e.target.value)} required />
+            <div>
+              <input type="number" placeholder="Point cost" min={1} value={prizeCost} onChange={(e) => { setPrizeCost(e.target.value); setFetchedPriceCents(null); }} required style={{ width: "100%" }} />
+              {fetchedPriceCents !== null && (
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--green)", marginTop: 5 }}>
+                  💲 ${(fetchedPriceCents / 100).toFixed(2)} × {alRate} pts/$1 = {Math.round(fetchedPriceCents / 100 * (Number(alRate) || 10))} pts
+                </div>
+              )}
+            </div>
             <button type="submit" className="pbtn pbtn-gold" style={{ width: "100%" }}>ADD PRIZE</button>
           </form>
 

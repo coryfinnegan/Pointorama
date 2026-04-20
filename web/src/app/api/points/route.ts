@@ -7,7 +7,7 @@ import { assertAdmin } from "@/lib/session";
 async function applyPendingAllowance() {
   const db = getDb();
   const [al] = await db.select().from(allowanceSettings).where(eq(allowanceSettings.id, 1));
-  if (!al || !al.enabled || !al.weeklyAmount || !al.nextPayAt) return;
+  if (!al || !al.enabled || (!al.weeklyAmount && !al.weeklyMoneyCents) || !al.nextPayAt) return;
 
   const now = Date.now();
   const next = new Date(al.nextPayAt).getTime();

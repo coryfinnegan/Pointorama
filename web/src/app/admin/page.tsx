@@ -308,24 +308,22 @@ export default function AdminPage() {
               >
                 {savingAl ? "..." : allowance?.enabled ? "DISABLE" : "ENABLE"}
               </button>
+              <button
+                className="pbtn pbtn-blue"
+                style={{ fontSize: 9, padding: "10px 14px", flex: 1 }}
+                disabled={savingAl}
+                onClick={() => saveAllowance(allowance?.enabled ?? false)}
+              >
+                SAVE
+              </button>
               {allowance?.enabled && (
-                <>
-                  <button
-                    className="pbtn pbtn-blue"
-                    style={{ fontSize: 9, padding: "10px 14px", flex: 1 }}
-                    disabled={savingAl}
-                    onClick={() => saveAllowance(true)}
-                  >
-                    SAVE AMOUNT
-                  </button>
-                  <button
-                    className="pbtn pbtn-green"
-                    style={{ fontSize: 9, padding: "10px 14px", flex: 1 }}
-                    onClick={payNow}
-                  >
-                    PAY NOW
-                  </button>
-                </>
+                <button
+                  className="pbtn pbtn-green"
+                  style={{ fontSize: 9, padding: "10px 14px", flex: 1 }}
+                  onClick={payNow}
+                >
+                  PAY NOW
+                </button>
               )}
             </div>
           </div>

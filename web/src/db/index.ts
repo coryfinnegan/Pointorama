@@ -15,6 +15,7 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
 
   // Column migrations must run before any SQL that references new columns
   try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN weekly_money_cents INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
+  try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN exchange_rate INTEGER NOT NULL DEFAULT 10`); } catch { /* already exists */ }
 
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS points_log (
@@ -44,6 +45,7 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       weekly_amount INTEGER NOT NULL DEFAULT 0,
       weekly_money_cents INTEGER NOT NULL DEFAULT 0,
+      exchange_rate INTEGER NOT NULL DEFAULT 10,
       enabled INTEGER NOT NULL DEFAULT 0,
       next_pay_at TEXT
     );
@@ -53,7 +55,7 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
       note TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-    INSERT OR IGNORE INTO allowance_settings (id, weekly_amount, weekly_money_cents, enabled) VALUES (1, 0, 0, 0);
+    INSERT OR IGNORE INTO allowance_settings (id, weekly_amount, weekly_money_cents, exchange_rate, enabled) VALUES (1, 0, 0, 10, 0);
   `);
 
   _db = drizzle(sqlite, { schema });

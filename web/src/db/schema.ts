@@ -38,11 +38,22 @@ export const redemptions = sqliteTable("redemptions", {
 export const allowanceSettings = sqliteTable("allowance_settings", {
   id: int("id").primaryKey({ autoIncrement: true }),
   weeklyAmount: int("weekly_amount").notNull().default(0),
+  weeklyMoneyCents: int("weekly_money_cents").notNull().default(0),
   enabled: int("enabled", { mode: "boolean" }).notNull().default(false),
   nextPayAt: text("next_pay_at"), // ISO datetime, null until first enable
+});
+
+export const moneyLog = sqliteTable("money_log", {
+  id: int("id").primaryKey({ autoIncrement: true }),
+  amountCents: int("amount_cents").notNull(),
+  note: text("note").notNull().default(""),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
 });
 
 export type PointsLog = typeof pointsLog.$inferSelect;
 export type Prize = typeof prizes.$inferSelect;
 export type Redemption = typeof redemptions.$inferSelect;
 export type AllowanceSettings = typeof allowanceSettings.$inferSelect;
+export type MoneyLog = typeof moneyLog.$inferSelect;

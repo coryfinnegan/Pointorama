@@ -19,16 +19,17 @@ function LoginForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin }),
     });
-    setLoading(false);
     if (res.ok) {
+      // Keep loading=true so button stays disabled while navigating
       const from = searchParams.get("from") ?? "/admin";
       router.push(from);
       router.refresh();
-    } else {
-      setError("WRONG PIN!");
-      setPin("");
-      inputRef.current?.focus();
+      return;
     }
+    setLoading(false);
+    setError("WRONG PIN!");
+    setPin("");
+    inputRef.current?.focus();
   }
 
   return (

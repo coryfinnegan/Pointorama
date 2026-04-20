@@ -40,12 +40,22 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
     CREATE TABLE IF NOT EXISTS allowance_settings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       weekly_amount INTEGER NOT NULL DEFAULT 0,
+      weekly_money_cents INTEGER NOT NULL DEFAULT 0,
       enabled INTEGER NOT NULL DEFAULT 0,
       next_pay_at TEXT
     );
+    CREATE TABLE IF NOT EXISTS money_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      amount_cents INTEGER NOT NULL,
+      note TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
     -- Seed the single settings row if missing
-    INSERT OR IGNORE INTO allowance_settings (id, weekly_amount, enabled) VALUES (1, 0, 0);
+    INSERT OR IGNORE INTO allowance_settings (id, weekly_amount, weekly_money_cents, enabled) VALUES (1, 0, 0, 0);
   `);
+
+  // Idempotent column migration for existing databases
+  try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN weekly_money_cents INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
 
   _db = drizzle(sqlite, { schema });
   return _db;

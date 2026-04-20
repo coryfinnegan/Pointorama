@@ -4,6 +4,7 @@ import { getLevel } from "@/lib/levels";
 import type { PointsLog, Redemption, AllowanceSettings } from "@/db/schema";
 
 type PointsData = { total: number; logs: PointsLog[]; allowance: AllowanceSettings };
+type MoneyData = { totalCents: number };
 
 const KID_NAME = process.env.NEXT_PUBLIC_KID_NAME ?? "SAM";
 
@@ -108,12 +109,14 @@ function AllowanceCard({ al }: { al: AllowanceSettings }) {
 export default function HomePage() {
   const [data, setData] = useState<PointsData | null>(null);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
+  const [money, setMoney] = useState<MoneyData | null>(null);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/points").then((r) => r.json()),
       fetch("/api/redemptions").then((r) => r.json()),
-    ]).then(([pts, red]) => { setData(pts); setRedemptions(red); });
+      fetch("/api/money").then((r) => r.json()),
+    ]).then(([pts, red, mon]) => { setData(pts); setRedemptions(red); setMoney(mon); });
   }, []);
 
   const spent = redemptions.filter((r) => r.status !== "cancelled").reduce((s, r) => s + r.pointsSpent, 0);
@@ -174,6 +177,21 @@ export default function HomePage() {
           ⭐ {data === null ? "—" : displayTotal.toLocaleString()} EARNED TOTAL
         </div>
       </div>
+
+      {/* Money balance */}
+      {money !== null && money.totalCents > 0 && (
+        <div className="pcard pcard-green" style={{ textAlign: "center", padding: "24px 16px" }}>
+          <div style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", letterSpacing: 3, marginBottom: 10 }}>
+            💵 MONEY SAVED
+          </div>
+          <div
+            className="anim-glow"
+            style={{ fontFamily: "var(--pixel)", fontSize: 44, color: "var(--green)", lineHeight: 1 }}
+          >
+            ${(money.totalCents / 100).toFixed(2)}
+          </div>
+        </div>
+      )}
 
       {/* Level progress */}
       <div className="pcard">

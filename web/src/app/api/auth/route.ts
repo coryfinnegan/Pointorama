@@ -9,10 +9,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const hash = process.env.ADMIN_PIN_HASH ?? "";
-  console.log("[auth] hash length:", hash.length, "first10:", hash.substring(0, 10));
+  const hashB64 = process.env.ADMIN_PIN_HASH ?? "";
+  const hash = Buffer.from(hashB64, "base64").toString("utf8");
   const valid = await bcrypt.compare(pin, hash);
-  console.log("[auth] compare result:", valid);
   if (!valid) {
     return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
   }

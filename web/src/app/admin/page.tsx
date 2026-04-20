@@ -60,9 +60,12 @@ export default function AdminPage() {
     }
   }
 
+  const [fetchedNoImage, setFetchedNoImage] = useState(false);
+
   async function fetchMeta() {
     if (!linkUrl) return;
     setFetchingMeta(true);
+    setFetchedNoImage(false);
     try {
       const res = await fetch("/api/prizes/fetch-meta", {
         method: "POST",
@@ -72,9 +75,13 @@ export default function AdminPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       if (data.title) setPrizeName(data.title);
-      if (data.image) setPrizeImg(data.image);
+      if (data.image) {
+        setPrizeImg(data.image);
+      } else {
+        setFetchedNoImage(true);
+      }
       if (data.description) setPrizeDesc(data.description);
-      toast.success("Fetched!");
+      toast.success(data.image ? "Fetched!" : "Fetched — paste image URL below");
     } catch (err) {
       toast.error(`Could not fetch: ${err}`);
     } finally {
@@ -101,7 +108,7 @@ export default function AdminPage() {
 
   function resetPrizeForm() {
     setPrizeName(""); setPrizeDesc(""); setPrizeCost(""); setPrizeImg("");
-    setLinkUrl(""); setUploadPreview("");
+    setLinkUrl(""); setUploadPreview(""); setFetchedNoImage(false);
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -224,12 +231,31 @@ export default function AdminPage() {
 
           <form onSubmit={addPrize} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {addMode === "link" && (
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type="url" placeholder="https://amazon.com/..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} style={{ flex: 1 }} />
-                <button type="button" className="pbtn pbtn-blue" style={{ fontSize: 9, padding: "10px 14px", flexShrink: 0 }} onClick={fetchMeta} disabled={fetchingMeta || !linkUrl}>
-                  {fetchingMeta ? "..." : "FETCH"}
-                </button>
-              </div>
+              <>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input type="url" placeholder="https://amazon.com/..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} style={{ flex: 1 }} />
+                  <button type="button" className="pbtn pbtn-blue" style={{ fontSize: 9, padding: "10px 14px", flexShrink: 0 }} onClick={fetchMeta} disabled={fetchingMeta || !linkUrl}>
+                    {fetchingMeta ? "..." : "FETCH"}
+                  </button>
+                </div>
+                {/* Shown when fetch succeeded but Amazon blocked the image */}
+                {fetchedNoImage && (
+                  <div>
+                    <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 6 }}>
+                      ⚠ SITE BLOCKED IMAGE AUTO-FETCH
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--dim)", marginBottom: 6 }}>
+                      On Amazon: right-click the product photo → <em>Copy image address</em>, then paste below.
+                    </div>
+                    <input
+                      type="url"
+                      placeholder="Paste image URL here..."
+                      value={prizeImg}
+                      onChange={(e) => setPrizeImg(e.target.value)}
+                    />
+                  </div>
+                )}
+              </>
             )}
             {addMode === "manual" && (
               <div>

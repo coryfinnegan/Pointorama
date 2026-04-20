@@ -1,14 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { pointsLog } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { pointsLog, allowanceSettings } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { assertAdmin } from "@/lib/session";
 
+async function applyPendingAllowance() {
+  const db = getDb();
+  const [al] = await db.select().from(allowanceSettings).where(eq(allowanceSettings.id, 1));
+  if (!al || !al.enabled || !al.weeklyAmount || !al.nextPayAt) return;
+
+  const now = Date.now();
+  const next = new Date(al.nextPayAt).getTime();
+  if (now < next) return;
+
+  // Calculate how many full weeks are overdue (catch up if app was offline)
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  const weeksMissed = Math.max(1, Math.floor((now - next) / weekMs) + 1);
+  const totalPoints = weeksMissed * al.weeklyAmount;
+
+  await db.insert(pointsLog).values({
+    amount: totalPoints,
+    note: weeksMissed > 1
+      ? `💰 Allowance ×${weeksMissed} weeks (+${al.weeklyAmount}/wk)`
+      : `💰 Weekly allowance`,
+  });
+
+  // Advance nextPayAt by exactly the number of weeks paid
+  const newNext = new Date(next + weeksMissed * weekMs);
+  await db
+    .update(allowanceSettings)
+    .set({ nextPayAt: newNext.toISOString() })
+    .where(eq(allowanceSettings.id, 1));
+}
+
 export async function GET() {
+  await applyPendingAllowance();
+
   const db = getDb();
   const logs = await db.select().from(pointsLog).orderBy(desc(pointsLog.id));
   const total = logs.reduce((sum, entry) => sum + entry.amount, 0);
-  return NextResponse.json({ total, logs });
+
+  const [al] = await db.select().from(allowanceSettings).where(eq(allowanceSettings.id, 1));
+
+  return NextResponse.json({ total, logs, allowance: al });
 }
 
 export async function POST(req: NextRequest) {

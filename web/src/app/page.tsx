@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { getLevel } from "@/lib/levels";
-import type { PointsLog, Redemption } from "@/db/schema";
+import type { PointsLog, Redemption, AllowanceSettings } from "@/db/schema";
 
-type PointsData = { total: number; logs: PointsLog[] };
+type PointsData = { total: number; logs: PointsLog[]; allowance: AllowanceSettings };
 
 const KID_NAME = process.env.NEXT_PUBLIC_KID_NAME ?? "SAM";
 
@@ -27,6 +27,82 @@ function useCountUp(target: number, duration = 900) {
     return () => { if (raf.current !== null) cancelAnimationFrame(raf.current); };
   }, [target, duration]);
   return display;
+}
+
+function AllowanceCard({ al }: { al: AllowanceSettings }) {
+  const [now, setNow] = useState(Date.now());
+
+  // Tick every minute so the countdown updates
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!al.enabled || !al.weeklyAmount || !al.nextPayAt) return null;
+
+  const nextMs = new Date(al.nextPayAt).getTime();
+  const msLeft = Math.max(0, nextMs - now);
+  const daysLeft = Math.floor(msLeft / (24 * 60 * 60 * 1000));
+  const hoursLeft = Math.floor((msLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const pct = Math.min(100, Math.max(0, ((7 * 24 * 60 * 60 * 1000 - msLeft) / (7 * 24 * 60 * 60 * 1000)) * 100));
+
+  const isDueNow = msLeft === 0;
+
+  return (
+    <div
+      className="pcard"
+      style={{
+        border: isDueNow ? "2px solid var(--green)" : "2px solid rgba(68,136,255,0.4)",
+        background: isDueNow ? "rgba(0,255,136,0.06)" : "rgba(68,136,255,0.06)",
+        padding: "20px 20px 16px",
+      }}
+    >
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: isDueNow ? "var(--green)" : "var(--blue)", letterSpacing: 2 }}>
+          💰 WEEKLY ALLOWANCE
+        </div>
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 18, color: isDueNow ? "var(--green)" : "var(--blue)" }}>
+          +{al.weeklyAmount} ⭐
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="ptrack" style={{ height: 12, marginBottom: 10 }}>
+        <div
+          className="pfill"
+          style={{
+            width: `${pct}%`,
+            background: isDueNow
+              ? `linear-gradient(90deg, var(--green)88, var(--green))`
+              : `linear-gradient(90deg, #4488ff88, #4488ff)`,
+            boxShadow: isDueNow ? "0 0 10px var(--green)" : "0 0 10px #4488ff",
+          }}
+        />
+      </div>
+
+      {/* Countdown */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {isDueNow ? (
+          <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--green)" }} className="anim-glow">
+            BEING ADDED NOW!
+          </div>
+        ) : (
+          <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)" }}>
+            {daysLeft > 0 ? (
+              <><span style={{ color: "var(--text)", fontSize: 14 }}>{daysLeft}</span> day{daysLeft !== 1 ? "s" : ""} {hoursLeft}h</>
+            ) : (
+              <><span style={{ color: "var(--blue)", fontSize: 14 }}>{hoursLeft}</span> hrs</>
+            )}
+            {" "}until payday
+          </div>
+        )}
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>
+          {new Date(al.nextPayAt).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function HomePage() {
@@ -117,6 +193,9 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Allowance countdown */}
+      {data?.allowance && <AllowanceCard al={data.allowance} />}
 
       {/* Recent activity */}
       {allActivity.length > 0 ? (

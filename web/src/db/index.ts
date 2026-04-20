@@ -37,6 +37,14 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
       status TEXT NOT NULL DEFAULT 'pending',
       redeemed_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS allowance_settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      weekly_amount INTEGER NOT NULL DEFAULT 0,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      next_pay_at TEXT
+    );
+    -- Seed the single settings row if missing
+    INSERT OR IGNORE INTO allowance_settings (id, weekly_amount, enabled) VALUES (1, 0, 0);
   `);
 
   _db = drizzle(sqlite, { schema });

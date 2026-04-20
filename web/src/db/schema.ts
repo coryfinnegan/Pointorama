@@ -35,6 +35,14 @@ export const redemptions = sqliteTable("redemptions", {
     .default(sql`(datetime('now'))`),
 });
 
+export const allowanceSettings = sqliteTable("allowance_settings", {
+  id: int("id").primaryKey({ autoIncrement: true }),
+  weeklyAmount: int("weekly_amount").notNull().default(0),
+  enabled: int("enabled", { mode: "boolean" }).notNull().default(false),
+  nextPayAt: text("next_pay_at"), // ISO datetime, null until first enable
+});
+
 export type PointsLog = typeof pointsLog.$inferSelect;
 export type Prize = typeof prizes.$inferSelect;
 export type Redemption = typeof redemptions.$inferSelect;
+export type AllowanceSettings = typeof allowanceSettings.$inferSelect;

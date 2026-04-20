@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Prize, Redemption } from "@/db/schema";
+import type { Prize, Redemption, AllowanceSettings } from "@/db/schema";
 
 type AddMode = "link" | "manual";
 
@@ -11,6 +11,11 @@ export default function AdminPage() {
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [tab, setTab] = useState<"points" | "prizes" | "pending">("points");
+
+  // Allowance
+  const [allowance, setAllowance] = useState<AllowanceSettings | null>(null);
+  const [alAmount, setAlAmount] = useState("");
+  const [savingAl, setSavingAl] = useState(false);
 
   // Points form
   const [amount, setAmount] = useState("");
@@ -28,15 +33,47 @@ export default function AdminPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function loadAll() {
-    const [prizeList, redemptionList] = await Promise.all([
+    const [prizeList, redemptionList, al] = await Promise.all([
       fetch("/api/prizes").then((r) => r.json()),
       fetch("/api/redemptions").then((r) => r.json()),
+      fetch("/api/allowance").then((r) => r.json()),
     ]);
     setPrizes(prizeList);
     setRedemptions(redemptionList);
+    setAllowance(al);
+    setAlAmount(String(al.weeklyAmount ?? 0));
   }
 
   useEffect(() => { loadAll(); }, []);
+
+  async function saveAllowance(enabled: boolean) {
+    setSavingAl(true);
+    const amt = Number(alAmount);
+    if (isNaN(amt) || amt < 0) { toast.error("Invalid amount"); setSavingAl(false); return; }
+    const res = await fetch("/api/allowance", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weeklyAmount: amt, enabled }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setAllowance(updated);
+      toast.success(enabled ? `Allowance set to ${amt} pts/week!` : "Allowance disabled");
+    } else {
+      toast.error("Failed to save");
+    }
+    setSavingAl(false);
+  }
+
+  async function payNow() {
+    if (!allowance?.weeklyAmount) return;
+    const res = await fetch("/api/points", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: allowance.weeklyAmount, note: "💰 Manual allowance payment" }),
+    });
+    if (res.ok) toast.success(`+${allowance.weeklyAmount} points paid!`);
+  }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -203,6 +240,69 @@ export default function AdminPage() {
               <input type="text" placeholder="Reason (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
               <button type="submit" className="pbtn pbtn-gold" style={{ width: "100%" }}>AWARD POINTS</button>
             </form>
+          </div>
+
+          {/* Allowance settings */}
+          <div className="pcard" style={{ border: allowance?.enabled ? "2px solid rgba(68,136,255,0.4)" : "2px solid var(--bg3)", background: allowance?.enabled ? "rgba(68,136,255,0.06)" : "var(--bg2)", marginBottom: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: allowance?.enabled ? "var(--blue)" : "var(--dim)", letterSpacing: 1 }}>
+                💰 WEEKLY ALLOWANCE
+              </div>
+              {allowance?.enabled && (
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--green)" }}>● ACTIVE</div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type="number"
+                min={0}
+                placeholder="Points per week"
+                value={alAmount}
+                onChange={(e) => setAlAmount(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <span style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", alignSelf: "center", flexShrink: 0 }}>pts / week</span>
+            </div>
+
+            {allowance?.nextPayAt && allowance.enabled && (
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", marginBottom: 12 }}>
+                NEXT PAYOUT:{" "}
+                <span style={{ color: "var(--blue)" }}>
+                  {new Date(allowance.nextPayAt).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}
+                </span>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                className={`pbtn ${allowance?.enabled ? "pbtn-dim" : "pbtn-blue"}`}
+                style={{ fontSize: 9, padding: "10px 14px", flex: 1 }}
+                disabled={savingAl}
+                onClick={() => saveAllowance(!allowance?.enabled)}
+              >
+                {savingAl ? "..." : allowance?.enabled ? "DISABLE" : "ENABLE"}
+              </button>
+              {allowance?.enabled && (
+                <>
+                  <button
+                    className="pbtn pbtn-blue"
+                    style={{ fontSize: 9, padding: "10px 14px", flex: 1 }}
+                    disabled={savingAl}
+                    onClick={() => saveAllowance(true)}
+                  >
+                    SAVE AMOUNT
+                  </button>
+                  <button
+                    className="pbtn pbtn-green"
+                    style={{ fontSize: 9, padding: "10px 14px", flex: 1 }}
+                    onClick={payNow}
+                  >
+                    PAY NOW
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

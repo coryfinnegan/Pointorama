@@ -21,6 +21,34 @@ function extractMeta(html: string, property: string): string {
   );
 }
 
+function slugToTitle(slug: string): string {
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function tryLegoUrl(url: string): { title: string; image: string } | null {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes("lego.com")) return null;
+
+    // /en-us/product/mclaren-mcl39-f1-car-42228
+    const segments = u.pathname.split("/").filter(Boolean);
+    const slug = segments[segments.length - 1]; // e.g. mclaren-mcl39-f1-car-42228
+    const parts = slug.split("-");
+    const setNumber = parts[parts.length - 1];
+    if (!/^\d{4,6}$/.test(setNumber)) return null;
+
+    const nameSlug = parts.slice(0, -1).join("-");
+    const title = slugToTitle(nameSlug) || `LEGO Set ${setNumber}`;
+    const image = `https://images.brickset.com/sets/images/${setNumber}-1.jpg`;
+    return { title, image };
+  } catch {
+    return null;
+  }
+}
+
 function extractImage(html: string, url: string): string {
   // Standard og:image
   let img = extractMeta(html, "og:image:secure_url") || extractMeta(html, "og:image");
@@ -40,12 +68,6 @@ function extractImage(html: string, url: string): string {
     } catch { /* ignore */ }
   }
 
-  // Lego / generic: first large <img> with a meaningful src
-  if (url.includes("lego.com")) {
-    const legoImg = html.match(/<img[^>]+src=["'](https:[^"']+\.(?:jpg|png|webp)[^"']*)["']/i)?.[1];
-    if (legoImg) return decodeEntities(legoImg);
-  }
-
   return "";
 }
 
@@ -59,6 +81,12 @@ export async function POST(req: NextRequest) {
   const { url } = await req.json();
   if (typeof url !== "string" || !url.startsWith("http")) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+  }
+
+  // Handle Lego URLs without fetching (Cloudflare blocks server requests)
+  const legoMeta = tryLegoUrl(url);
+  if (legoMeta) {
+    return NextResponse.json({ title: legoMeta.title, image: legoMeta.image, description: "" });
   }
 
   try {

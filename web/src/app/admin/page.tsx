@@ -15,6 +15,7 @@ export default function AdminPage() {
   // Allowance
   const [allowance, setAllowance] = useState<AllowanceSettings | null>(null);
   const [alAmount, setAlAmount] = useState("");
+  const [alMoney, setAlMoney] = useState(""); // dollars, e.g. "5.00"
   const [savingAl, setSavingAl] = useState(false);
 
   // Points form
@@ -42,6 +43,7 @@ export default function AdminPage() {
     setRedemptions(redemptionList);
     setAllowance(al);
     setAlAmount(String(al.weeklyAmount ?? 0));
+    setAlMoney(al.weeklyMoneyCents ? (al.weeklyMoneyCents / 100).toFixed(2) : "");
   }
 
   useEffect(() => { loadAll(); }, []);
@@ -49,16 +51,22 @@ export default function AdminPage() {
   async function saveAllowance(enabled: boolean) {
     setSavingAl(true);
     const amt = Number(alAmount);
-    if (isNaN(amt) || amt < 0) { toast.error("Invalid amount"); setSavingAl(false); return; }
+    const moneyCents = alMoney ? Math.round(parseFloat(alMoney) * 100) : 0;
+    if (isNaN(amt) || amt < 0 || isNaN(moneyCents) || moneyCents < 0) {
+      toast.error("Invalid amount"); setSavingAl(false); return;
+    }
     const res = await fetch("/api/allowance", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ weeklyAmount: amt, enabled }),
+      body: JSON.stringify({ weeklyAmount: amt, weeklyMoneyCents: moneyCents, enabled }),
     });
     if (res.ok) {
       const updated = await res.json();
       setAllowance(updated);
-      toast.success(enabled ? `Allowance set to ${amt} pts/week!` : "Allowance disabled");
+      const parts = [];
+      if (amt > 0) parts.push(`${amt} pts`);
+      if (moneyCents > 0) parts.push(`$${(moneyCents / 100).toFixed(2)}`);
+      toast.success(enabled ? `Allowance: ${parts.join(" + ")}/week` : "Allowance disabled");
     } else {
       toast.error("Failed to save");
     }
@@ -66,18 +74,22 @@ export default function AdminPage() {
   }
 
   async function payNow() {
-    if (!allowance?.weeklyAmount) return;
-    const res = await fetch("/api/points", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: allowance.weeklyAmount, note: "💰 Manual allowance payment" }),
-    });
-    if (res.ok) toast.success(`+${allowance.weeklyAmount} points paid!`);
+    const hasPoints = (allowance?.weeklyAmount ?? 0) > 0;
+    const hasMoney = (allowance?.weeklyMoneyCents ?? 0) > 0;
+    if (!hasPoints && !hasMoney) return;
+    const jobs: Promise<Response>[] = [];
+    if (hasPoints) jobs.push(fetch("/api/points", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: allowance!.weeklyAmount, note: "💰 Manual allowance payment" }) }));
+    if (hasMoney) jobs.push(fetch("/api/money", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountCents: allowance!.weeklyMoneyCents, note: "💵 Manual allowance payment" }) }));
+    await Promise.all(jobs);
+    const parts = [];
+    if (hasPoints) parts.push(`+${allowance!.weeklyAmount} pts`);
+    if (hasMoney) parts.push(`+$${(allowance!.weeklyMoneyCents / 100).toFixed(2)}`);
+    toast.success(`Paid! ${parts.join(" ")}`);
   }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/admin/login");
+    router.push("/");
   }
 
   async function addPoints(e: React.FormEvent) {
@@ -253,7 +265,7 @@ export default function AdminPage() {
               )}
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
               <input
                 type="number"
                 min={0}
@@ -262,7 +274,20 @@ export default function AdminPage() {
                 onChange={(e) => setAlAmount(e.target.value)}
                 style={{ flex: 1 }}
               />
-              <span style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", alignSelf: "center", flexShrink: 0 }}>pts / week</span>
+              <span style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", alignSelf: "center", flexShrink: 0 }}>pts / wk</span>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontFamily: "var(--pixel)", fontSize: 14, color: "var(--green)", alignSelf: "center", flexShrink: 0 }}>$</span>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="0.00"
+                value={alMoney}
+                onChange={(e) => setAlMoney(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <span style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", alignSelf: "center", flexShrink: 0 }}>/ wk</span>
             </div>
 
             {allowance?.nextPayAt && allowance.enabled && (

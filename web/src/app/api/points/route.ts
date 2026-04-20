@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { pointsLog, allowanceSettings } from "@/db/schema";
+import { pointsLog, allowanceSettings, moneyLog } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { assertAdmin } from "@/lib/session";
 
@@ -18,12 +18,24 @@ async function applyPendingAllowance() {
   const weeksMissed = Math.max(1, Math.floor((now - next) / weekMs) + 1);
   const totalPoints = weeksMissed * al.weeklyAmount;
 
-  await db.insert(pointsLog).values({
-    amount: totalPoints,
-    note: weeksMissed > 1
-      ? `💰 Allowance ×${weeksMissed} weeks (+${al.weeklyAmount}/wk)`
-      : `💰 Weekly allowance`,
-  });
+  if (al.weeklyAmount > 0) {
+    await db.insert(pointsLog).values({
+      amount: totalPoints,
+      note: weeksMissed > 1
+        ? `💰 Allowance ×${weeksMissed} weeks (+${al.weeklyAmount}/wk)`
+        : `💰 Weekly allowance`,
+    });
+  }
+
+  if (al.weeklyMoneyCents > 0) {
+    const totalMoney = weeksMissed * al.weeklyMoneyCents;
+    await db.insert(moneyLog).values({
+      amountCents: totalMoney,
+      note: weeksMissed > 1
+        ? `💵 Allowance ×${weeksMissed} weeks (+$${(al.weeklyMoneyCents / 100).toFixed(2)}/wk)`
+        : `💵 Weekly allowance`,
+    });
+  }
 
   // Advance nextPayAt by exactly the number of weeks paid
   const newNext = new Date(next + weeksMissed * weekMs);

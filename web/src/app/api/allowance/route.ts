@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { allowanceSettings } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { allowanceSettings, moneyLog, pointsLog } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { assertAdmin } from "@/lib/session";
 
 export async function GET() {
   const db = getDb();
   const [row] = await db.select().from(allowanceSettings).where(eq(allowanceSettings.id, 1));
-  return NextResponse.json(row);
+  const moneyLogs = await db.select().from(moneyLog).orderBy(desc(moneyLog.id));
+  const moneyTotalCents = moneyLogs.reduce((s, l) => s + l.amountCents, 0);
+  return NextResponse.json({ ...row, moneyTotalCents, moneyLogs });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -23,6 +25,9 @@ export async function PATCH(req: NextRequest) {
 
   if (typeof body.weeklyAmount === "number" && body.weeklyAmount >= 0) {
     patch.weeklyAmount = body.weeklyAmount;
+  }
+  if (typeof body.weeklyMoneyCents === "number" && body.weeklyMoneyCents >= 0) {
+    patch.weeklyMoneyCents = body.weeklyMoneyCents;
   }
   if (typeof body.enabled === "boolean") {
     patch.enabled = body.enabled;

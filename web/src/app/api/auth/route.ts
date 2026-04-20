@@ -10,7 +10,9 @@ export async function POST(req: Request) {
   }
 
   const hash = process.env.ADMIN_PIN_HASH ?? "";
+  console.log("[auth] hash length:", hash.length, "first10:", hash.substring(0, 10));
   const valid = await bcrypt.compare(pin, hash);
+  console.log("[auth] compare result:", valid);
   if (!valid) {
     return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
   }

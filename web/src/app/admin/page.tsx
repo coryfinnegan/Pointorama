@@ -317,11 +317,12 @@ export default function AdminPage() {
                   Say <em style={{ color: "var(--text)" }}>"Hey Siri, Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points"</em> to run it hands-free.
                 </div>
                 <a
-                  href={`shortcuts://import-shortcut?url=${encodeURIComponent(`${origin}/api/shortcut?token=${quickToken}`)}&name=${encodeURIComponent(`Add ${process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points`)}`}
+                  href={`/api/shortcut?token=${quickToken}`}
+                  download
                   style={{ display: "block", textDecoration: "none", marginBottom: 12 }}
                 >
                   <div className="pbtn pbtn-blue" style={{ fontSize: 10, padding: "14px", textAlign: "center", display: "block" }}>
-                    📲 IMPORT SHORTCUT
+                    📲 DOWNLOAD SHORTCUT
                   </div>
                 </a>
                 <div style={{ display: "flex", gap: 8 }}>

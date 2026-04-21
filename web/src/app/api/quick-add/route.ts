@@ -4,6 +4,27 @@ import { getDb } from "@/db";
 import { pointsLog, allowanceSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+// GET /api/quick-add?token=TOKEN&amount=N&note=... — used by the Siri Shortcut
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const token = searchParams.get("token") ?? "";
+  const amount = Number(searchParams.get("amount"));
+  const note = searchParams.get("note") ?? "";
+
+  if (!amount || isNaN(amount)) {
+    return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+  }
+
+  const db = getDb();
+  const [settings] = await db.select().from(allowanceSettings).where(eq(allowanceSettings.id, 1));
+  if (!settings?.quickAddToken || token !== settings.quickAddToken) {
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
+  const [entry] = await db.insert(pointsLog).values({ amount, note }).returning();
+  return NextResponse.json({ ok: true, amount: entry.amount, note: entry.note });
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { amount, note } = body;

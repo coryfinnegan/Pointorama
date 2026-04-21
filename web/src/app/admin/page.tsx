@@ -337,8 +337,8 @@ export default function AdminPage() {
                   <li>Add <strong style={{ color: "var(--text)" }}>Ask for Input</strong> → type: Text → prompt: "Reason?"</li>
                   <li>Add <strong style={{ color: "var(--text)" }}>Set Variable</strong> → name: Reason</li>
                   <li>Add <strong style={{ color: "var(--text)" }}>Get Contents of URL</strong> → paste URL above, replace <code style={{ color: "var(--gold)" }}>${"{Amount}"}</code> and <code style={{ color: "var(--gold)" }}>${"{Reason}"}</code> with the matching variables</li>
-                  <li>Tap the shortcut name → rename to <strong style={{ color: "var(--text)" }}>"Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points"</strong></li>
-                  <li>Tap <strong style={{ color: "var(--text)" }}>Add to Siri</strong></li>
+                  <li>Tap the shortcut name at the top → rename to <strong style={{ color: "var(--text)" }}>"Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points"</strong> → tap <strong style={{ color: "var(--text)" }}>Done</strong></li>
+                  <li>Tap <strong style={{ color: "var(--text)" }}>✕</strong> to close the editor → long-press the shortcut card → tap <strong style={{ color: "var(--text)" }}>Details</strong> → tap <strong style={{ color: "var(--text)" }}>Add to Siri</strong></li>
                 </ol>
                 <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", width: "100%", marginTop: 12 }} onClick={regenerateToken}>
                   REGENERATE TOKEN

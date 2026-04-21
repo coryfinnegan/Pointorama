@@ -12,6 +12,27 @@ export default function AdminPage() {
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [tab, setTab] = useState<"points" | "prizes" | "pending">("points");
 
+  // Quick-add token (Siri)
+  const [quickToken, setQuickToken] = useState<string | null>(null);
+  const [tokenCopied, setTokenCopied] = useState(false);
+
+  async function loadToken() {
+    const res = await fetch("/api/quick-add-token");
+    if (res.ok) setQuickToken((await res.json()).token);
+  }
+
+  async function regenerateToken() {
+    const res = await fetch("/api/quick-add-token", { method: "POST" });
+    if (res.ok) setQuickToken((await res.json()).token);
+  }
+
+  function copyToken() {
+    if (!quickToken) return;
+    navigator.clipboard.writeText(quickToken);
+    setTokenCopied(true);
+    setTimeout(() => setTokenCopied(false), 2000);
+  }
+
   // Allowance + exchange rate
   const [allowance, setAllowance] = useState<AllowanceSettings | null>(null);
   const [alAmount, setAlAmount] = useState("");
@@ -48,7 +69,7 @@ export default function AdminPage() {
     setAlRate(String(al.exchangeRate ?? 10));
   }
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); loadToken(); }, []);
 
   async function saveAllowance(enabled: boolean) {
     setSavingAl(true);
@@ -283,6 +304,43 @@ export default function AdminPage() {
             <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--dim)", marginTop: 8 }}>
               Used when adding prizes from a link. Save via the allowance SAVE button below.
             </div>
+          </div>
+
+          {/* Siri Shortcut */}
+          <div className="pcard" style={{ marginBottom: 0 }}>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)", marginBottom: 12, letterSpacing: 1 }}>🎙️ SIRI SHORTCUT</div>
+            {quickToken ? (
+              <>
+                <div style={{ fontSize: 11, color: "var(--dim)", marginBottom: 10 }}>
+                  Use this token in your Siri Shortcut to add points hands-free.
+                </div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <div style={{ flex: 1, fontFamily: "monospace", fontSize: 11, background: "var(--bg)", border: "2px solid var(--bg3)", borderRadius: 2, padding: "8px 10px", color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {quickToken}
+                  </div>
+                  <button className="pbtn pbtn-blue" style={{ fontSize: 8, padding: "8px 12px", flexShrink: 0 }} onClick={copyToken}>
+                    {tokenCopied ? "✓" : "COPY"}
+                  </button>
+                </div>
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--dim)", lineHeight: 2, marginBottom: 12 }}>
+                  SHORTCUT SETUP:<br />
+                  1. New Shortcut → Add Action<br />
+                  2. "Ask for Input" → Number → name it <em style={{ color: "var(--text)" }}>Amount</em><br />
+                  3. "Ask for Input" → Text → name it <em style={{ color: "var(--text)" }}>Reason</em><br />
+                  4. "Get Contents of URL"<br />
+                  &nbsp;&nbsp;URL: <em style={{ color: "var(--blue)" }}>https://100.87.143.68/api/quick-add</em><br />
+                  &nbsp;&nbsp;Method: POST · JSON body:<br />
+                  &nbsp;&nbsp;<em style={{ color: "var(--text)" }}>{`{ "amount": Amount, "note": Reason }`}</em><br />
+                  &nbsp;&nbsp;Headers: Authorization: Bearer <em style={{ color: "var(--gold)" }}>{quickToken.slice(0, 8)}…</em><br />
+                  5. "Show Result" → name shortcut "Add Sam Points"
+                </div>
+                <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px" }} onClick={regenerateToken}>
+                  REGENERATE TOKEN
+                </button>
+              </>
+            ) : (
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>Loading…</div>
+            )}
           </div>
 
           {/* Allowance settings */}

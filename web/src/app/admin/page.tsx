@@ -315,20 +315,28 @@ export default function AdminPage() {
                 <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 10, lineHeight: 1.5 }}>
                   iOS blocks unsigned shortcut imports, so you&apos;ll need to create it manually once — it takes about 2 minutes.
                 </div>
-                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 6 }}>YOUR QUICK-ADD URL</div>
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 6 }}>ENDPOINT URL</div>
                 <div style={{
                   background: "var(--bg)", border: "2px solid var(--bg3)", borderRadius: 2,
                   padding: "10px 12px", fontSize: 11, color: "var(--text)", wordBreak: "break-all",
                   marginBottom: 10, lineHeight: 1.5,
                 }}>
-                  {`${process.env.NEXT_PUBLIC_SERVER_URL ?? origin}/api/quick-add?token=${quickToken}&amount=\${Amount}&note=\${Reason}`}
+                  {`${process.env.NEXT_PUBLIC_SERVER_URL ?? origin}/api/quick-add`}
                 </div>
                 <button className="pbtn pbtn-gold" style={{ fontSize: 9, padding: "10px", width: "100%", marginBottom: 14 }} onClick={() => {
-                  navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SERVER_URL ?? origin}/api/quick-add?token=${quickToken}&amount=\${Amount}&note=\${Reason}`);
+                  navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SERVER_URL ?? origin}/api/quick-add`);
                   setTokenCopied(true); setTimeout(() => setTokenCopied(false), 2000);
                 }}>
                   {tokenCopied ? "✓ COPIED" : "COPY URL"}
                 </button>
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 4 }}>BEARER TOKEN</div>
+                <div style={{
+                  background: "var(--bg)", border: "2px solid var(--bg3)", borderRadius: 2,
+                  padding: "10px 12px", fontSize: 11, color: "var(--text)", wordBreak: "break-all",
+                  marginBottom: 10, fontFamily: "monospace",
+                }}>
+                  Bearer {quickToken}
+                </div>
                 <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 8 }}>SETUP STEPS</div>
                 <ol style={{ fontSize: 12, color: "var(--dim)", lineHeight: 2, paddingLeft: 18, margin: 0 }}>
                   <li>Open the <strong style={{ color: "var(--text)" }}>Shortcuts</strong> app → tap <strong style={{ color: "var(--text)" }}>+</strong></li>
@@ -336,9 +344,8 @@ export default function AdminPage() {
                   <li>Add <strong style={{ color: "var(--text)" }}>Set Variable</strong> → name: Amount</li>
                   <li>Add <strong style={{ color: "var(--text)" }}>Ask for Input</strong> → type: Text → prompt: "Reason?"</li>
                   <li>Add <strong style={{ color: "var(--text)" }}>Set Variable</strong> → name: Reason</li>
-                  <li>Add <strong style={{ color: "var(--text)" }}>Get Contents of URL</strong> → paste URL above, replace <code style={{ color: "var(--gold)" }}>${"{Amount}"}</code> and <code style={{ color: "var(--gold)" }}>${"{Reason}"}</code> with the matching variables</li>
+                  <li>Add <strong style={{ color: "var(--text)" }}>Get Contents of URL</strong> → paste the endpoint URL above → tap <strong style={{ color: "var(--text)" }}>Show More</strong> → Method: <strong style={{ color: "var(--text)" }}>POST</strong> → Headers: add <code style={{ color: "var(--gold)" }}>Authorization</code> = Bearer token above → Request Body: <strong style={{ color: "var(--text)" }}>JSON</strong> → add <code style={{ color: "var(--gold)" }}>amount</code> = Amount variable, <code style={{ color: "var(--gold)" }}>note</code> = Reason variable</li>
                   <li>Tap the shortcut name at the top → rename to <strong style={{ color: "var(--text)" }}>"Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points"</strong> → tap <strong style={{ color: "var(--text)" }}>Done</strong></li>
-                  <li>Tap <strong style={{ color: "var(--text)" }}>✕</strong> to close the editor → long-press the shortcut card → tap <strong style={{ color: "var(--text)" }}>Details</strong> → tap <strong style={{ color: "var(--text)" }}>Add to Siri</strong></li>
                 </ol>
                 <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", width: "100%", marginTop: 12 }} onClick={regenerateToken}>
                   REGENERATE TOKEN

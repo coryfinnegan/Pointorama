@@ -40,6 +40,7 @@ export const allowanceSettings = sqliteTable("allowance_settings", {
   weeklyAmount: int("weekly_amount").notNull().default(0),
   weeklyMoneyCents: int("weekly_money_cents").notNull().default(0),
   exchangeRate: int("exchange_rate").notNull().default(10),
+  quickAddToken: text("quick_add_token"),
   enabled: int("enabled", { mode: "boolean" }).notNull().default(false),
   nextPayAt: text("next_pay_at"), // ISO datetime, null until first enable
 });

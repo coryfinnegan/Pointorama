@@ -3,6 +3,106 @@ import { useEffect, useRef, useState } from "react";
 import { getLevel } from "@/lib/levels";
 import type { PointsLog, Redemption, AllowanceSettings } from "@/db/schema";
 
+function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+  const [amount, setAmount] = useState<number | null>(null);
+  const [custom, setCustom] = useState("");
+  const [note, setNote] = useState("");
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const pinRef = useRef<HTMLInputElement>(null);
+
+  const finalAmount = amount ?? (custom ? Number(custom) : null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!finalAmount) return;
+    setLoading(true);
+    setError("");
+    const res = await fetch("/api/quick-add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: finalAmount, note, pin }),
+    });
+    setLoading(false);
+    if (res.ok) {
+      onAdded();
+      onClose();
+    } else {
+      const data = await res.json();
+      setError(data.error === "Wrong PIN" ? "WRONG PIN!" : "ERROR");
+      setPin("");
+      pinRef.current?.focus();
+    }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 600, padding: 24 }}>
+      <div className="pcard anim-pop" style={{ width: "100%", maxWidth: 340, padding: 24 }}>
+        <div style={{ fontFamily: "var(--pixel)", fontSize: 10, color: "var(--gold)", textAlign: "center", marginBottom: 18 }}>⭐ ADD POINTS</div>
+
+        {/* Quick amounts */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
+          {[5, 10, 15, 20, 25, 50].map((n) => (
+            <button
+              key={n}
+              type="button"
+              className={`pbtn ${amount === n ? "pbtn-gold" : "pbtn-green"}`}
+              style={{ fontSize: 11, padding: "12px 4px" }}
+              onClick={() => { setAmount(n); setCustom(""); }}
+            >
+              +{n}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`pbtn ${amount === null && custom ? "pbtn-gold" : "pbtn-dim"}`}
+            style={{ fontSize: 9, padding: "12px 4px", gridColumn: "span 2" }}
+            onClick={() => { setAmount(null); setTimeout(() => document.getElementById("qa-custom")?.focus(), 50); }}
+          >
+            CUSTOM
+          </button>
+        </div>
+
+        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {amount === null && (
+            <input
+              id="qa-custom"
+              type="number"
+              placeholder="Amount"
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              min={1}
+            />
+          )}
+          <input type="text" placeholder="Reason (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+          <input
+            ref={pinRef}
+            type="password"
+            inputMode="numeric"
+            placeholder="Admin PIN"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+          {error && (
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--red)", textAlign: "center", animation: "shake 0.4s ease" }}>
+              {error}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 10 }}>
+            <button type="submit" className="pbtn pbtn-gold" style={{ flex: 1 }} disabled={loading || !finalAmount || !pin}>
+              {loading ? "..." : `ADD ${finalAmount ? `+${finalAmount}` : ""}`}
+            </button>
+            <button type="button" className="pbtn pbtn-dim" onClick={onClose}>CANCEL</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 type PointsData = { total: number; logs: PointsLog[]; allowance: AllowanceSettings };
 type MoneyData = { totalCents: number };
 
@@ -110,14 +210,17 @@ export default function HomePage() {
   const [data, setData] = useState<PointsData | null>(null);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [money, setMoney] = useState<MoneyData | null>(null);
+  const [quickAdd, setQuickAdd] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
+  function loadAll() {
+    return Promise.all([
       fetch("/api/points").then((r) => r.json()),
       fetch("/api/redemptions").then((r) => r.json()),
       fetch("/api/money").then((r) => r.json()),
     ]).then(([pts, red, mon]) => { setData(pts); setRedemptions(red); setMoney(mon); });
-  }, []);
+  }
+
+  useEffect(() => { loadAll(); }, []);
 
   const spent = redemptions.filter((r) => r.status !== "cancelled").reduce((s, r) => s + r.pointsSpent, 0);
   const totalEarned = data?.total ?? 0;
@@ -241,6 +344,31 @@ export default function HomePage() {
         <div style={{ textAlign: "center", padding: "40px 0", fontFamily: "var(--pixel)", fontSize: 10, color: "var(--dim)", lineHeight: 3 }}>
           NO POINTS YET!<br />ASK DAD TO<br />AWARD YOUR FIRST POINTS!
         </div>
+      )}
+
+      {/* Floating quick-add button */}
+      <button
+        onClick={() => setQuickAdd(true)}
+        style={{
+          position: "fixed", bottom: 80, right: 20, zIndex: 500,
+          width: 52, height: 52, borderRadius: "50%",
+          background: "var(--gold)", border: "none", cursor: "pointer",
+          fontFamily: "var(--pixel)", fontSize: 24, color: "#1a0600",
+          boxShadow: "0 0 18px rgba(255,215,0,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "transform 0.15s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+      >
+        +
+      </button>
+
+      {quickAdd && (
+        <QuickAddModal
+          onClose={() => setQuickAdd(false)}
+          onAdded={() => { loadAll(); }}
+        />
       )}
     </div>
   );

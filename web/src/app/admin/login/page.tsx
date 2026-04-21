@@ -20,10 +20,8 @@ function LoginForm() {
       body: JSON.stringify({ pin }),
     });
     if (res.ok) {
-      // Keep loading=true so button stays disabled while navigating
       const from = searchParams.get("from") ?? "/admin";
       router.push(from);
-      router.refresh();
       return;
     }
     setLoading(false);

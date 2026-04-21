@@ -15,6 +15,7 @@ export default function AdminPage() {
   // Quick-add token (Siri)
   const [quickToken, setQuickToken] = useState<string | null>(null);
   const [tokenCopied, setTokenCopied] = useState(false);
+  const [origin, setOrigin] = useState("");
 
   async function loadToken() {
     const res = await fetch("/api/quick-add-token");
@@ -69,7 +70,7 @@ export default function AdminPage() {
     setAlRate(String(al.exchangeRate ?? 10));
   }
 
-  useEffect(() => { loadAll(); loadToken(); }, []);
+  useEffect(() => { loadAll(); loadToken(); setOrigin(window.location.origin); }, []);
 
   async function saveAllowance(enabled: boolean) {
     setSavingAl(true);
@@ -316,7 +317,7 @@ export default function AdminPage() {
                   Say <em style={{ color: "var(--text)" }}>"Hey Siri, Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points"</em> to run it hands-free.
                 </div>
                 <a
-                  href={`shortcuts://import-shortcut?url=${encodeURIComponent(`https://100.87.143.68/api/shortcut?token=${quickToken}`)}&name=${encodeURIComponent(`Add ${process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points`)}`}
+                  href={`shortcuts://import-shortcut?url=${encodeURIComponent(`${origin}/api/shortcut?token=${quickToken}`)}&name=${encodeURIComponent(`Add ${process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points`)}`}
                   style={{ display: "block", textDecoration: "none", marginBottom: 12 }}
                 >
                   <div className="pbtn pbtn-blue" style={{ fontSize: 10, padding: "14px", textAlign: "center", display: "block" }}>

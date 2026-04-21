@@ -350,7 +350,7 @@ export default function HomePage() {
       <button
         onClick={() => setQuickAdd(true)}
         style={{
-          position: "fixed", bottom: 80, right: 20, zIndex: 500,
+          position: "fixed", bottom: "calc(76px + 8vh)", right: 20, zIndex: 500,
           width: 52, height: 52, borderRadius: "50%",
           background: "var(--gold)", border: "none", cursor: "pointer",
           fontFamily: "var(--pixel)", fontSize: 24, color: "#1a0600",

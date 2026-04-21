@@ -311,32 +311,26 @@ export default function AdminPage() {
             <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)", marginBottom: 12, letterSpacing: 1 }}>🎙️ SIRI SHORTCUT</div>
             {quickToken ? (
               <>
-                <div style={{ fontSize: 11, color: "var(--dim)", marginBottom: 10 }}>
-                  Use this token in your Siri Shortcut to add points hands-free.
+                <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 14 }}>
+                  Tap the button below on your iPhone to import a pre-configured shortcut.
+                  Say <em style={{ color: "var(--text)" }}>"Hey Siri, Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Kid"} Points"</em> to run it hands-free.
                 </div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <div style={{ flex: 1, fontFamily: "monospace", fontSize: 11, background: "var(--bg)", border: "2px solid var(--bg3)", borderRadius: 2, padding: "8px 10px", color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {quickToken}
+                <a
+                  href={`shortcuts://import-shortcut?url=${encodeURIComponent(`https://<tailscale-ip>/api/shortcut?token=${quickToken}`)}&name=${encodeURIComponent(`Add ${process.env.NEXT_PUBLIC_KID_NAME ?? "Kid"} Points`)}`}
+                  style={{ display: "block", textDecoration: "none", marginBottom: 12 }}
+                >
+                  <div className="pbtn pbtn-blue" style={{ fontSize: 10, padding: "14px", textAlign: "center", display: "block" }}>
+                    📲 IMPORT SHORTCUT
                   </div>
-                  <button className="pbtn pbtn-blue" style={{ fontSize: 8, padding: "8px 12px", flexShrink: 0 }} onClick={copyToken}>
-                    {tokenCopied ? "✓" : "COPY"}
+                </a>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", flex: 1 }} onClick={regenerateToken}>
+                    REGENERATE TOKEN
+                  </button>
+                  <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", flex: 1 }} onClick={copyToken}>
+                    {tokenCopied ? "✓ COPIED" : "COPY TOKEN"}
                   </button>
                 </div>
-                <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--dim)", lineHeight: 2, marginBottom: 12 }}>
-                  SHORTCUT SETUP:<br />
-                  1. New Shortcut → Add Action<br />
-                  2. "Ask for Input" → Number → name it <em style={{ color: "var(--text)" }}>Amount</em><br />
-                  3. "Ask for Input" → Text → name it <em style={{ color: "var(--text)" }}>Reason</em><br />
-                  4. "Get Contents of URL"<br />
-                  &nbsp;&nbsp;URL: <em style={{ color: "var(--blue)" }}>https://<tailscale-ip>/api/quick-add</em><br />
-                  &nbsp;&nbsp;Method: POST · JSON body:<br />
-                  &nbsp;&nbsp;<em style={{ color: "var(--text)" }}>{`{ "amount": Amount, "note": Reason }`}</em><br />
-                  &nbsp;&nbsp;Headers: Authorization: Bearer <em style={{ color: "var(--gold)" }}>{quickToken.slice(0, 8)}…</em><br />
-                  5. "Show Result" → name shortcut "Add Kid Points"
-                </div>
-                <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px" }} onClick={regenerateToken}>
-                  REGENERATE TOKEN
-                </button>
               </>
             ) : (
               <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>Loading…</div>

@@ -312,26 +312,37 @@ export default function AdminPage() {
             <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)", marginBottom: 12, letterSpacing: 1 }}>🎙️ SIRI SHORTCUT</div>
             {quickToken ? (
               <>
-                <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 14 }}>
-                  Tap the button below on your iPhone to import a pre-configured shortcut.
-                  Say <em style={{ color: "var(--text)" }}>"Hey Siri, Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Kid"} Points"</em> to run it hands-free.
+                <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 10, lineHeight: 1.5 }}>
+                  iOS blocks unsigned shortcut imports, so you&apos;ll need to create it manually once — it takes about 2 minutes.
                 </div>
-                <a
-                  href={`shortcuts://import-shortcut?url=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SERVER_URL ?? origin}/api/shortcut?token=${quickToken}`)}`}
-                  style={{ display: "block", textDecoration: "none", marginBottom: 12 }}
-                >
-                  <div className="pbtn pbtn-blue" style={{ fontSize: 10, padding: "14px", textAlign: "center", display: "block" }}>
-                    📲 IMPORT SHORTCUT
-                  </div>
-                </a>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", flex: 1 }} onClick={regenerateToken}>
-                    REGENERATE TOKEN
-                  </button>
-                  <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", flex: 1 }} onClick={copyToken}>
-                    {tokenCopied ? "✓ COPIED" : "COPY TOKEN"}
-                  </button>
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 6 }}>YOUR QUICK-ADD URL</div>
+                <div style={{
+                  background: "var(--bg)", border: "2px solid var(--bg3)", borderRadius: 2,
+                  padding: "10px 12px", fontSize: 11, color: "var(--text)", wordBreak: "break-all",
+                  marginBottom: 10, lineHeight: 1.5,
+                }}>
+                  {`${process.env.NEXT_PUBLIC_SERVER_URL ?? origin}/api/quick-add?token=${quickToken}&amount=\${Amount}&note=\${Reason}`}
                 </div>
+                <button className="pbtn pbtn-gold" style={{ fontSize: 9, padding: "10px", width: "100%", marginBottom: 14 }} onClick={() => {
+                  navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_SERVER_URL ?? origin}/api/quick-add?token=${quickToken}&amount=\${Amount}&note=\${Reason}`);
+                  setTokenCopied(true); setTimeout(() => setTokenCopied(false), 2000);
+                }}>
+                  {tokenCopied ? "✓ COPIED" : "COPY URL"}
+                </button>
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 8 }}>SETUP STEPS</div>
+                <ol style={{ fontSize: 12, color: "var(--dim)", lineHeight: 2, paddingLeft: 18, margin: 0 }}>
+                  <li>Open the <strong style={{ color: "var(--text)" }}>Shortcuts</strong> app → tap <strong style={{ color: "var(--text)" }}>+</strong></li>
+                  <li>Add <strong style={{ color: "var(--text)" }}>Ask for Input</strong> → type: Number → prompt: "How many points?"</li>
+                  <li>Add <strong style={{ color: "var(--text)" }}>Set Variable</strong> → name: Amount</li>
+                  <li>Add <strong style={{ color: "var(--text)" }}>Ask for Input</strong> → type: Text → prompt: "Reason?"</li>
+                  <li>Add <strong style={{ color: "var(--text)" }}>Set Variable</strong> → name: Reason</li>
+                  <li>Add <strong style={{ color: "var(--text)" }}>Get Contents of URL</strong> → paste URL above, replace <code style={{ color: "var(--gold)" }}>${"{Amount}"}</code> and <code style={{ color: "var(--gold)" }}>${"{Reason}"}</code> with the matching variables</li>
+                  <li>Tap the shortcut name → rename to <strong style={{ color: "var(--text)" }}>"Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Kid"} Points"</strong></li>
+                  <li>Tap <strong style={{ color: "var(--text)" }}>Add to Siri</strong></li>
+                </ol>
+                <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", width: "100%", marginTop: 12 }} onClick={regenerateToken}>
+                  REGENERATE TOKEN
+                </button>
               </>
             ) : (
               <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>Loading…</div>

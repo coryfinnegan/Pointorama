@@ -11,7 +11,7 @@ export default defineConfig({
     include: ["src/__tests__/**/*.test.ts"],
     env: {
       SESSION_SECRET: "test-secret-key-padded-to-32-bytes!!!!",
-      ADMIN_PIN_HASH: "$2b$10$.TBj13o9YwdcxU0i82mHOudNYjGTGQadvk8yV8NnmyrZSUn4plTC6",
+      ADMIN_PIN_HASH: "JDJiJDEwJFVOTmpNeWJ4Mjc5cXJHb3hSNzY3UC5jV1N1d0JLcGEzSVRpMEZ0SENWbnk3S2N0dVlkZU55",
       NEXT_PUBLIC_KID_NAME: "Sam",
     },
   },

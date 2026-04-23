@@ -356,6 +356,41 @@ export default function AdminPage() {
             )}
           </div>
 
+          {/* Telegram */}
+          <div className="pcard" style={{ marginBottom: 0 }}>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)", marginBottom: 12, letterSpacing: 1 }}>💬 TELEGRAM BOT</div>
+            <div style={{ fontSize: 13, color: "var(--dim)", marginBottom: 12, lineHeight: 1.6 }}>
+              Control points and get redemption alerts via Telegram.
+            </div>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--gold)", marginBottom: 8 }}>SETUP STEPS</div>
+            <ol style={{ fontSize: 12, color: "var(--dim)", lineHeight: 2.2, paddingLeft: 18, margin: "0 0 14px" }}>
+              <li>Message <strong style={{ color: "var(--text)" }}>@BotFather</strong> on Telegram → <code style={{ color: "var(--gold)" }}>/newbot</code> → follow prompts → copy the token</li>
+              <li>SSH into your server and add to <code style={{ color: "var(--gold)" }}>/opt/pointorama/app/.env.local</code>:<br />
+                <code style={{ color: "var(--green)", fontSize: 11 }}>TELEGRAM_BOT_TOKEN=your_token_here</code><br />
+                <code style={{ color: "var(--green)", fontSize: 11 }}>TELEGRAM_SECRET=any_random_string</code>
+              </li>
+              <li>Redeploy, then message your new bot anything — it will reply with your Chat ID. Add it:<br />
+                <code style={{ color: "var(--green)", fontSize: 11 }}>TELEGRAM_CHAT_ID=your_chat_id</code>
+              </li>
+              <li>Redeploy once more, then tap the button below to register the webhook</li>
+            </ol>
+            <button
+              className="pbtn pbtn-blue"
+              style={{ fontSize: 9, padding: "10px", width: "100%" }}
+              onClick={async () => {
+                const res = await fetch("/api/telegram?setup=1");
+                const data = await res.json();
+                if (data.ok) toast.success("Webhook registered!");
+                else toast.error(`Failed: ${data.description ?? JSON.stringify(data)}`);
+              }}
+            >
+              📡 REGISTER WEBHOOK
+            </button>
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 7, color: "var(--dim)", marginTop: 10, lineHeight: 1.8 }}>
+              COMMANDS: <code style={{ color: "var(--text)" }}>add 15 reason</code> · <code style={{ color: "var(--text)" }}>remove 5 reason</code> · <code style={{ color: "var(--text)" }}>balance</code>
+            </div>
+          </div>
+
           {/* Allowance settings */}
           <div className="pcard" style={{ border: allowance?.enabled ? "2px solid rgba(68,136,255,0.4)" : "2px solid var(--bg3)", background: allowance?.enabled ? "rgba(68,136,255,0.06)" : "var(--bg2)", marginBottom: 0 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>

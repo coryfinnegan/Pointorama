@@ -1,10 +1,9 @@
 export const LEVELS = [
-  { level: 1, name: "ROOKIE",     min: 0,    max: 150,      color: "#8899cc" },
-  { level: 2, name: "ADVENTURER", min: 150,  max: 400,      color: "#44cc88" },
-  { level: 3, name: "HERO",       min: 400,  max: 900,      color: "#4488ff" },
-  { level: 4, name: "CHAMPION",   min: 900,  max: 2000,     color: "#ff8844" },
-  { level: 5, name: "LEGEND",     min: 2000, max: 4500,     color: "#ff44dd" },
-  { level: 6, name: "MYTHIC",     min: 4500, max: Infinity, color: "#ffd700" },
+  { level: 1, name: "Rookie",   emoji: "⭐", min: 0,    max: 100,  color: "#8899cc" },
+  { level: 2, name: "Explorer", emoji: "🔥", min: 100,  max: 250,  color: "#44cc88" },
+  { level: 3, name: "Achiever", emoji: "⚡", min: 250,  max: 500,  color: "#4488ff" },
+  { level: 4, name: "Champion", emoji: "🏆", min: 500,  max: 1000, color: "#ff8844" },
+  { level: 5, name: "Legend",   emoji: "👑", min: 1000, max: Infinity, color: "#ff44dd" },
 ] as const;
 
 export type Level = typeof LEVELS[number];

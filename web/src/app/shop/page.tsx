@@ -14,6 +14,7 @@ export default function ShopPage() {
   const [confirming, setConfirming] = useState<Prize | null>(null);
   const [justBought, setJustBought] = useState<Prize | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
   async function load() {
     const [pts, redemptions, prizeList] = await Promise.all([
@@ -146,8 +147,8 @@ export default function ShopPage() {
                 transition: "transform 0.15s, border-color 0.2s",
                 marginBottom: 0,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)"; setHoveredId(prize.id); }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; setHoveredId(null); }}
             >
               {/* Image or emoji */}
               <div style={{ width: "100%", height: 140, background: "var(--bg3)", overflow: "hidden", position: "relative" }}>
@@ -166,6 +167,31 @@ export default function ShopPage() {
                 {/* Green "can afford" dot */}
                 {can && (
                   <div style={{ position: "absolute", top: 6, right: 6, width: 10, height: 10, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 8px var(--green)" }} />
+                )}
+                {/* Hover overlay: remaining points */}
+                {hoveredId === prize.id && (
+                  <div style={{
+                    position: "absolute", bottom: 0, left: 0, right: 0,
+                    background: "rgba(0,0,0,0.78)",
+                    padding: "7px 10px",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  }}>
+                    {can ? (
+                      <>
+                        <span style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>LEFT AFTER:</span>
+                        <span style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--gold)" }}>
+                          {(available - prize.pointCost).toLocaleString()} ⭐
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>NEED:</span>
+                        <span style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--red)" }}>
+                          {(prize.pointCost - available).toLocaleString()} ⭐ more
+                        </span>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 

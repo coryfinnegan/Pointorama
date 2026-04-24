@@ -52,8 +52,11 @@ async function handleMessage(msg) {
   const chatId = String(msg.chat?.id ?? "");
   const text   = (msg.text ?? "").trim();
 
+  if (!CHAT_ID) {
+    console.log(`[setup] Message from chat ID: ${chatId} (${msg.chat?.first_name ?? "unknown"})`);
+  }
+
   if (CHAT_ID && chatId !== CHAT_ID) {
-    // Unknown sender — reply with their chat ID so parent can configure it
     await send(chatId, `❌ Unauthorized.\n\nYour Chat ID is: \`${chatId}\`\nAdd it as TELEGRAM_CHAT_ID on the server.`);
     return;
   }

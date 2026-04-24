@@ -86,6 +86,52 @@ function extractPrice(html: string): number | null {
   return null;
 }
 
+async function tryNintendoUrl(
+  url: string,
+  headers: Record<string, string>,
+): Promise<{ title: string; image: string; description: string; priceCents: number | null } | null> {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes("nintendo.com")) return null;
+
+    // Extract product ID — the long numeric segment in the URL slug
+    // e.g. .../donkey-kong-bananza-dk-island-and-emerald-rush-70050000062442-switch-2/
+    const slug = u.pathname.split("/").filter(Boolean).at(-1) ?? "";
+    const productIdMatch = slug.match(/(\d{12,})/);
+    if (!productIdMatch) return null;
+    const productId = productIdMatch[1];
+
+    // Fetch price from Nintendo eShop public API
+    let priceCents: number | null = null;
+    try {
+      const priceRes = await fetch(
+        `https://api.ec.nintendo.com/v1/price?country=US&lang=en&ids=${productId}`,
+        { signal: AbortSignal.timeout(5000) },
+      );
+      if (priceRes.ok) {
+        const data = await priceRes.json();
+        const raw = data?.prices?.[0]?.regular_price?.raw_value;
+        if (raw) priceCents = Math.round(parseFloat(raw) * 100);
+      }
+    } catch { /* ignore */ }
+
+    // Fetch product page for title, image, description
+    const pageRes = await fetch(url, { headers, redirect: "follow", signal: AbortSignal.timeout(10000) });
+    if (!pageRes.ok) return null;
+    const html = await pageRes.text();
+
+    const rawTitle =
+      decodeEntities(extractMeta(html, "og:title") || html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+    const title = rawTitle.replace(/\s*\|\s*Nintendo.*$/i, "").trim();
+    const image = extractImage(html, url);
+    const description = decodeEntities(extractMeta(html, "og:description") || extractMeta(html, "description")).trim();
+
+    return { title, image, description, priceCents };
+  } catch {
+    return null;
+  }
+}
+
 function extractImage(html: string, url: string): string {
   // Standard og:image
   let img = extractMeta(html, "og:image:secure_url") || extractMeta(html, "og:image");
@@ -126,18 +172,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ title: legoMeta.title, image: legoMeta.image, description: "" });
   }
 
+  const browserHeaders = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Cache-Control": "no-cache",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+  };
+
+  // Handle Nintendo URLs: eShop API for price + page scrape for image/title
+  const nintendoMeta = await tryNintendoUrl(url, browserHeaders);
+  if (nintendoMeta) {
+    return NextResponse.json(nintendoMeta);
+  }
+
   try {
     const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Cache-Control": "no-cache",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-      },
+      headers: browserHeaders,
       redirect: "follow",
       signal: AbortSignal.timeout(10000),
     });

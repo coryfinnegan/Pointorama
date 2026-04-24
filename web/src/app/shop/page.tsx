@@ -104,6 +104,11 @@ export default function ShopPage() {
               <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: canAfford ? "var(--red)" : "var(--dim)", marginBottom: 6 }}>
                 COST: {confirming.pointCost} ⭐
               </div>
+              {canAfford && (
+                <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", marginBottom: 6 }}>
+                  {(available - confirming.pointCost).toLocaleString()} ⭐ LEFT AFTER
+                </div>
+              )}
               {!canAfford && (
                 <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--red)", marginBottom: 6 }}>
                   NEED {need.toLocaleString()} MORE ⭐

@@ -265,7 +265,7 @@ export default function AdminPage() {
         <div>
           <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", marginBottom: 14, letterSpacing: 2 }}>QUICK ADD</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
-            {[5, 10, 15, 20, 25, 30, 50, 100].map((n) => (
+            {[5, 10, 15, 20, 25, 30, 40, 50, 100].map((n) => (
               <button
                 key={n}
                 className="pbtn pbtn-green"

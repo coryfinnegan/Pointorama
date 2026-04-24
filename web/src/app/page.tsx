@@ -300,7 +300,7 @@ export default function HomePage() {
       <div className="pcard">
         <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--pixel)", fontSize: 10, marginBottom: 10 }}>
           <span style={{ color: level.color }}>{level.name}</span>
-          <span style={{ color: "var(--dim)" }}>{next ? next.name : "MAX LEVEL 🏆"}</span>
+          <span style={{ color: "var(--dim)" }}>{next.name}</span>
         </div>
         <div className="ptrack" style={{ height: 20, marginBottom: 8 }}>
           <div
@@ -308,11 +308,9 @@ export default function HomePage() {
             style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${level.color}88, ${level.color})`, boxShadow: `0 0 10px ${level.color}99` }}
           />
         </div>
-        {next && (
-          <div style={{ textAlign: "right", fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)" }}>
-            {(next.min - totalEarned).toLocaleString()} pts to {next.name}
-          </div>
-        )}
+        <div style={{ textAlign: "right", fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)" }}>
+          {(next.min - totalEarned).toLocaleString()} pts to {next.name}
+        </div>
       </div>
 
       {/* Allowance countdown */}

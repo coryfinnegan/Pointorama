@@ -178,14 +178,14 @@ export default function ShopPage() {
                   }}>
                     {can ? (
                       <>
-                        <span style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>LEFT AFTER:</span>
+                        <span style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "#fff" }}>LEFT AFTER:</span>
                         <span style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--gold)" }}>
                           {(available - prize.pointCost).toLocaleString()} ⭐
                         </span>
                       </>
                     ) : (
                       <>
-                        <span style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)" }}>NEED:</span>
+                        <span style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "#fff" }}>NEED:</span>
                         <span style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--red)" }}>
                           {(prize.pointCost - available).toLocaleString()} ⭐ more
                         </span>

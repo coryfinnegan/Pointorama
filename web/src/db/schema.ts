@@ -16,6 +16,7 @@ export const prizes = sqliteTable("prizes", {
   description: text("description").notNull().default(""),
   pointCost: int("point_cost").notNull(),
   imageUrl: text("image_url"),
+  sourceUrl: text("source_url"),
   active: int("active", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at")
     .notNull()

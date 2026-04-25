@@ -202,7 +202,7 @@ export default function AdminPage() {
     const res = await fetch("/api/prizes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: prizeName, description: prizeDesc, pointCost: cost, imageUrl: prizeImg || null }),
+      body: JSON.stringify({ name: prizeName, description: prizeDesc, pointCost: cost, imageUrl: prizeImg || null, sourceUrl: linkUrl || null }),
     });
     if (res.ok) { toast.success(`"${prizeName}" added!`); resetPrizeForm(); loadAll(); }
     else toast.error("Failed");

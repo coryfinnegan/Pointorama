@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     const remaining = available - prize.pointCost;
     let notif = `🛍️ *${kidName} wants to redeem:*\n*${prize.name}*\n⭐ ${prize.pointCost} pts  ·  _${remaining} pts remaining_`;
     if (prize.description) notif += `\n${prize.description}`;
+    if (prize.sourceUrl) notif += `\n${prize.sourceUrl}`;
     await sendMessage(chatId, notif);
   }
 

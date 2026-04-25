@@ -17,6 +17,7 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
   try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN weekly_money_cents INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
   try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN exchange_rate INTEGER NOT NULL DEFAULT 10`); } catch { /* already exists */ }
   try { sqlite.exec(`ALTER TABLE allowance_settings ADD COLUMN quick_add_token TEXT`); } catch { /* already exists */ }
+  try { sqlite.exec(`ALTER TABLE prizes ADD COLUMN source_url TEXT`); } catch { /* already exists */ }
 
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS points_log (

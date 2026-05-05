@@ -288,6 +288,43 @@ export default function AdminPage() {
             </form>
           </div>
 
+          {/* Quick add money */}
+          <div className="pcard">
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", marginBottom: 12, letterSpacing: 2 }}>💵 QUICK ADD MONEY</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
+              {[1, 2, 5, 10, 20].map((d) => (
+                <button
+                  key={d}
+                  className="pbtn pbtn-green"
+                  style={{ fontSize: 11, padding: "14px 8px" }}
+                  onClick={async () => {
+                    const res = await fetch("/api/money", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountCents: d * 100, note: "Bonus" }) });
+                    if (res.ok) toast.success(`+$${d}.00 added!`);
+                    else toast.error("Failed");
+                  }}
+                >
+                  +${d}
+                </button>
+              ))}
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const dollars = parseFloat((e.currentTarget.elements.namedItem("moneyAmt") as HTMLInputElement).value);
+                if (isNaN(dollars) || dollars <= 0) return toast.error("Enter a valid amount");
+                const note = (e.currentTarget.elements.namedItem("moneyNote") as HTMLInputElement).value;
+                const res = await fetch("/api/money", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountCents: Math.round(dollars * 100), note: note || "Bonus" }) });
+                if (res.ok) { toast.success(`+$${dollars.toFixed(2)} added!`); (e.target as HTMLFormElement).reset(); }
+                else toast.error("Failed");
+              }}
+              style={{ display: "flex", flexDirection: "column", gap: 8 }}
+            >
+              <input name="moneyAmt" type="number" min="0.01" step="0.01" placeholder="Custom amount ($)" />
+              <input name="moneyNote" type="text" placeholder="Reason (optional)" />
+              <button type="submit" className="pbtn pbtn-gold" style={{ width: "100%" }}>ADD MONEY</button>
+            </form>
+          </div>
+
           {/* Exchange rate */}
           <div className="pcard" style={{ marginBottom: 0 }}>
             <div style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--dim)", marginBottom: 12, letterSpacing: 1 }}>💱 EXCHANGE RATE</div>

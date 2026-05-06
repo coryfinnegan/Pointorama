@@ -15,6 +15,7 @@ const DDL = `
     description TEXT NOT NULL DEFAULT '',
     point_cost INTEGER NOT NULL,
     image_url TEXT,
+    source_url TEXT,
     active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );

@@ -1,8 +1,11 @@
-name: Deploy
+name: Deploy App
 
 on:
   push:
     branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-app.yml"
 
 jobs:
   test:
@@ -37,25 +40,3 @@ jobs:
           script: |
             /opt/pointorama/deploy.sh
             systemctl restart pointorama-tg
-
-  deploy-landing:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install -g vercel
-      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: web
-      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: web
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: web
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

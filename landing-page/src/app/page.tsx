@@ -3,9 +3,9 @@ import { useState } from "react";
 
 const FEATURES = [
   {
-    emoji: "🚫",
-    title: "Zero-nag task tracking",
-    body: "Set up chores and behavior goals once. Kids open the app to see exactly what earns points — and go do it. You stop asking. The points do the motivating.",
+    emoji: "✅",
+    title: "Kids always know what to do",
+    body: "Set up chores and behavior goals once. Kids open the app to see exactly what earns points — and go do it. Clear expectations, consistent rewards.",
   },
   {
     emoji: "🛒",
@@ -52,7 +52,7 @@ const STEPS = [
   {
     n: "02",
     title: "Kids chase the shop",
-    body: "They see their balance, their level, and the prizes they're saving for. The app becomes the reminder. You become the hero who delivers.",
+    body: "They see their balance, their level, and the prizes they're saving for. Motivation comes from within — kids track their own progress and push themselves.",
   },
   {
     n: "03",
@@ -142,12 +142,12 @@ export default function LandingPage() {
           🚀 Early access — be the first to try it
         </div>
         <h1 style={{ fontSize: "clamp(38px, 7vw, 72px)", fontWeight: 900, lineHeight: 1.1, marginBottom: 22, letterSpacing: -1.5 }}>
-          Stop nagging.{" "}
-          <span style={{ color: "#ffd700" }}>Start rewarding.</span>
+          Good behavior{" "}
+          <span style={{ color: "#ffd700" }}>deserves a reward.</span>
         </h1>
         <p style={{ fontSize: "clamp(16px, 2.5vw, 20px)", color: "#9999cc", lineHeight: 1.75, marginBottom: 44, maxWidth: 580, margin: "0 auto 44px" }}>
-          Pointorama is the reward system that makes kids <em>want</em> to behave —
-          without reminders, charts on the fridge, or empty promises.
+          Pointorama helps families build a reward system kids genuinely get excited about —
+          real prizes, real progress, and habits that actually stick.
         </p>
         <div id="signup">
           <EmailForm />
@@ -158,7 +158,7 @@ export default function LandingPage() {
 
       {/* Social proof placeholder */}
       <div style={{ textAlign: "center", padding: "32px 24px", color: "#6666aa", fontSize: 14 }}>
-        Built by a parent who got tired of repeating himself.&nbsp;&nbsp;·&nbsp;&nbsp;Works for kids ages 5–16.&nbsp;&nbsp;·&nbsp;&nbsp;No app install required.
+        Works for kids ages 5–16.&nbsp;&nbsp;·&nbsp;&nbsp;No app install required.&nbsp;&nbsp;·&nbsp;&nbsp;Free to get started.
       </div>
 
       <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #1a1a3a 20%, #1a1a3a 80%, transparent)", margin: "0 24px" }} />
@@ -166,8 +166,8 @@ export default function LandingPage() {
       {/* How it works */}
       <section style={{ maxWidth: 1100, margin: "0 auto", padding: "90px 24px" }}>
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: "#ffd700", letterSpacing: 3, textAlign: "center", marginBottom: 16 }}>HOW IT WORKS</p>
-        <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, textAlign: "center", marginBottom: 14, letterSpacing: -0.5 }}>Three steps. No reminders needed.</h2>
-        <p style={{ fontSize: 17, color: "#9999cc", textAlign: "center", marginBottom: 60, maxWidth: 500, margin: "0 auto 60px", lineHeight: 1.65 }}>The system does the work so you can get back to being the fun parent.</p>
+        <h2 style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 800, textAlign: "center", marginBottom: 14, letterSpacing: -0.5 }}>Up and running in minutes.</h2>
+        <p style={{ fontSize: 17, color: "#9999cc", textAlign: "center", marginBottom: 60, maxWidth: 500, margin: "0 auto 60px", lineHeight: 1.65 }}>A reward system the whole family will actually use.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
           {STEPS.map(({ n, title, body }) => (
             <div key={n} style={{ background: "#0f0f28", border: "1px solid #1a1a3a", borderRadius: 14, padding: "36px 30px" }}>
@@ -263,7 +263,7 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section style={{ textAlign: "center", padding: "100px 24px" }}>
         <h2 style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 900, marginBottom: 18, letterSpacing: -1 }}>
-          Ready to stop repeating yourself?
+          Ready to make rewards work?
         </h2>
         <p style={{ color: "#9999cc", fontSize: 18, marginBottom: 44, lineHeight: 1.65, maxWidth: 480, margin: "0 auto 44px" }}>
           Join the waitlist. Be the first to know when early access opens.
@@ -274,7 +274,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer style={{ borderTop: "1px solid #1a1a3a", padding: "30px 32px", textAlign: "center" }}>
         <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: "#ffd700", marginBottom: 10 }}>⭐ POINTORAMA</div>
-        <div style={{ fontSize: 12, color: "#6666aa" }}>© {new Date().getFullYear()} Pointorama · Built by a dad who got tired of repeating himself.</div>
+        <div style={{ fontSize: 12, color: "#6666aa" }}>© {new Date().getFullYear()} Pointorama · A better way to reward kids.</div>
       </footer>
 
     </div>

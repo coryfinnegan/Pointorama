@@ -41,6 +41,29 @@ export default function AdminPage() {
   const [alRate, setAlRate] = useState("10"); // pts per $1
   const [savingAl, setSavingAl] = useState(false);
 
+  // Money balance
+  const [moneyCents, setMoneyCents] = useState<number | null>(null);
+
+  async function loadMoney() {
+    const res = await fetch("/api/money");
+    if (res.ok) setMoneyCents((await res.json()).totalCents);
+  }
+
+  async function subtractMoney(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const dollars = parseFloat((form.elements.namedItem("spendAmt") as HTMLInputElement).value);
+    if (isNaN(dollars) || dollars <= 0) return toast.error("Enter a valid amount");
+    const cents = Math.round(dollars * 100);
+    if (moneyCents !== null && cents > moneyCents) {
+      return toast.error(`Only $${(moneyCents / 100).toFixed(2)} available`);
+    }
+    const note = (form.elements.namedItem("spendNote") as HTMLInputElement).value;
+    const res = await fetch("/api/money", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountCents: -cents, note: note || "Spent" }) });
+    if (res.ok) { toast.success(`-$${dollars.toFixed(2)} subtracted`); form.reset(); loadMoney(); }
+    else toast.error((await res.json().catch(() => null))?.error ?? "Failed");
+  }
+
   // Points form
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -70,7 +93,7 @@ export default function AdminPage() {
     setAlRate(String(al.exchangeRate ?? 10));
   }
 
-  useEffect(() => { loadAll(); loadToken(); setOrigin(window.location.origin); }, []);
+  useEffect(() => { loadAll(); loadToken(); loadMoney(); setOrigin(window.location.origin); }, []);
 
   async function saveAllowance(enabled: boolean) {
     setSavingAl(true);
@@ -105,6 +128,7 @@ export default function AdminPage() {
     if (hasPoints) jobs.push(fetch("/api/points", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: allowance!.weeklyAmount, note: "💰 Manual allowance payment" }) }));
     if (hasMoney) jobs.push(fetch("/api/money", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountCents: allowance!.weeklyMoneyCents, note: "💵 Manual allowance payment" }) }));
     await Promise.all(jobs);
+    if (hasMoney) loadMoney();
     const parts = [];
     if (hasPoints) parts.push(`+${allowance!.weeklyAmount} pts`);
     if (hasMoney) parts.push(`+$${(allowance!.weeklyMoneyCents / 100).toFixed(2)}`);
@@ -290,7 +314,14 @@ export default function AdminPage() {
 
           {/* Quick add money */}
           <div className="pcard">
-            <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", marginBottom: 12, letterSpacing: 2 }}>💵 QUICK ADD MONEY</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", letterSpacing: 2 }}>💵 QUICK ADD MONEY</div>
+              {moneyCents !== null && (
+                <div data-testid="money-balance" style={{ fontFamily: "var(--pixel)", fontSize: 9, color: "var(--green)" }}>
+                  BALANCE ${(moneyCents / 100).toFixed(2)}
+                </div>
+              )}
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
               {[1, 2, 5, 10, 20].map((d) => (
                 <button
@@ -299,7 +330,7 @@ export default function AdminPage() {
                   style={{ fontSize: 11, padding: "14px 8px" }}
                   onClick={async () => {
                     const res = await fetch("/api/money", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountCents: d * 100, note: "Bonus" }) });
-                    if (res.ok) toast.success(`+$${d}.00 added!`);
+                    if (res.ok) { toast.success(`+$${d}.00 added!`); loadMoney(); }
                     else toast.error("Failed");
                   }}
                 >
@@ -314,7 +345,7 @@ export default function AdminPage() {
                 if (isNaN(dollars) || dollars <= 0) return toast.error("Enter a valid amount");
                 const note = (e.currentTarget.elements.namedItem("moneyNote") as HTMLInputElement).value;
                 const res = await fetch("/api/money", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountCents: Math.round(dollars * 100), note: note || "Bonus" }) });
-                if (res.ok) { toast.success(`+$${dollars.toFixed(2)} added!`); (e.target as HTMLFormElement).reset(); }
+                if (res.ok) { toast.success(`+$${dollars.toFixed(2)} added!`); (e.target as HTMLFormElement).reset(); loadMoney(); }
                 else toast.error("Failed");
               }}
               style={{ display: "flex", flexDirection: "column", gap: 8 }}
@@ -322,6 +353,13 @@ export default function AdminPage() {
               <input name="moneyAmt" type="number" min="0.01" step="0.01" placeholder="Custom amount ($)" />
               <input name="moneyNote" type="text" placeholder="Reason (optional)" />
               <button type="submit" className="pbtn pbtn-gold" style={{ width: "100%" }}>ADD MONEY</button>
+            </form>
+
+            <div style={{ fontFamily: "var(--pixel)", fontSize: 8, color: "var(--dim)", margin: "16px 0 10px", letterSpacing: 2 }}>💸 SUBTRACT MONEY</div>
+            <form onSubmit={subtractMoney} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <input name="spendAmt" type="number" min="0.01" step="0.01" placeholder="Amount to subtract ($)" aria-label="Amount to subtract" />
+              <input name="spendNote" type="text" placeholder="Reason (optional)" aria-label="Subtract reason" />
+              <button type="submit" className="pbtn pbtn-red" style={{ width: "100%" }}>SUBTRACT MONEY</button>
             </form>
           </div>
 

@@ -1,13 +1,13 @@
 "use client";
 import { Suspense, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { getPostLoginPath, hardNavigate } from "@/lib/redirect";
 
 function LoginForm() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -20,8 +20,10 @@ function LoginForm() {
       body: JSON.stringify({ pin }),
     });
     if (res.ok) {
-      const from = searchParams.get("from") ?? "/admin";
-      router.push(from);
+      // Full page load (not router.push): the client router may have cached the
+      // pre-login redirect for /admin (e.g. from a <Link> prefetch), which would
+      // bounce us straight back to this login page.
+      hardNavigate(getPostLoginPath(searchParams.get("from")));
       return;
     }
     setLoading(false);

@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "node",
     pool: "forks", // required for better-sqlite3 native module
     setupFiles: ["./src/__tests__/setup.ts"],
-    include: ["src/__tests__/**/*.test.ts"],
+    include: ["src/__tests__/**/*.test.{ts,tsx}"],
     env: {
       SESSION_SECRET: "test-secret-key-padded-to-32-bytes!!!!",
       ADMIN_PIN_HASH: "JDJiJDEwJFVOTmpNeWJ4Mjc5cXJHb3hSNzY3UC5jV1N1d0JLcGEzSVRpMEZ0SENWbnk3S2N0dVlkZU55",

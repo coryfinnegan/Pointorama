@@ -20,8 +20,15 @@ export async function POST(req: NextRequest) {
 
   const db = getDb();
   const { amountCents, note } = await req.json();
-  if (typeof amountCents !== "number" || amountCents === 0) {
+  if (!Number.isInteger(amountCents) || amountCents === 0) {
     return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+  }
+  if (amountCents < 0) {
+    const logs = await db.select({ amountCents: moneyLog.amountCents }).from(moneyLog);
+    const balanceCents = logs.reduce((s, l) => s + l.amountCents, 0);
+    if (balanceCents + amountCents < 0) {
+      return NextResponse.json({ error: "Insufficient balance", balanceCents }, { status: 400 });
+    }
   }
   const [entry] = await db
     .insert(moneyLog)

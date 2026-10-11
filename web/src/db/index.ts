@@ -32,6 +32,7 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
       description TEXT NOT NULL DEFAULT '',
       point_cost INTEGER NOT NULL,
       image_url TEXT,
+      source_url TEXT,
       active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -49,7 +50,8 @@ export function getDb(): BetterSQLite3Database<typeof schema> {
       weekly_money_cents INTEGER NOT NULL DEFAULT 0,
       exchange_rate INTEGER NOT NULL DEFAULT 10,
       enabled INTEGER NOT NULL DEFAULT 0,
-      next_pay_at TEXT
+      next_pay_at TEXT,
+      quick_add_token TEXT
     );
     CREATE TABLE IF NOT EXISTS money_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

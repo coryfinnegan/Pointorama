@@ -14,3 +14,8 @@ Install (one time, as root on the server):
     systemctl daemon-reload && systemctl enable --now pointorama-deploy.timer
 
 Logs: `journalctl -u pointorama-deploy`.
+
+Change the admin PIN (also rotates the session secret, signing everyone out):
+
+    cp deploy/set-pin.sh /opt/pointorama/ && chmod 700 /opt/pointorama/set-pin.sh
+    ssh -t root@<tailscale-ip> /opt/pointorama/set-pin.sh

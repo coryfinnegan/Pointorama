@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   // Notify parent via Telegram
   const chatId = authorizedChatId();
   if (chatId) {
-    const kidName = process.env.NEXT_PUBLIC_KID_NAME ?? "Sam";
+    const kidName = process.env.NEXT_PUBLIC_KID_NAME ?? "Kid";
     const remaining = available - prize.pointCost;
     let notif = `🛍️ *${kidName} wants to redeem:*\n*${prize.name}*\n⭐ ${prize.pointCost} pts  ·  _${remaining} pts remaining_`;
     if (prize.description) notif += `\n${prize.description}`;

@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Dashboard", () => {
   test("loads and shows the kid's name", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Hi, Sam!")).toBeVisible();
+    await expect(page.getByText("Hi, Kid!")).toBeVisible();
   });
 
   test("shows a level badge", async ({ page }) => {

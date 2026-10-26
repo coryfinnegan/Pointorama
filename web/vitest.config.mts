@@ -1,6 +1,10 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
+import bcrypt from "bcryptjs";
+
+// Test-only PIN ("1234"); the hash is generated at runtime so no hash is committed.
+const TEST_PIN_HASH = Buffer.from(bcrypt.hashSync("1234", 4)).toString("base64");
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
@@ -11,8 +15,8 @@ export default defineConfig({
     include: ["src/__tests__/**/*.test.{ts,tsx}"],
     env: {
       SESSION_SECRET: "test-secret-key-padded-to-32-bytes!!!!",
-      ADMIN_PIN_HASH: "JDJiJDEwJFVOTmpNeWJ4Mjc5cXJHb3hSNzY3UC5jV1N1d0JLcGEzSVRpMEZ0SENWbnk3S2N0dVlkZU55",
-      NEXT_PUBLIC_KID_NAME: "Sam",
+      ADMIN_PIN_HASH: TEST_PIN_HASH,
+      NEXT_PUBLIC_KID_NAME: "Kid",
     },
   },
 });

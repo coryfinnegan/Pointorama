@@ -9,7 +9,7 @@ import Database from "./web/node_modules/better-sqlite3/lib/index.js";
 const TOKEN    = process.env.TELEGRAM_BOT_TOKEN ?? "";
 const CHAT_ID  = process.env.TELEGRAM_CHAT_ID  ?? "";
 const DB_PATH  = process.env.DB_PATH            ?? "./web/pointorama.db";
-const KID      = process.env.NEXT_PUBLIC_KID_NAME ?? "Sam";
+const KID      = process.env.NEXT_PUBLIC_KID_NAME ?? "Kid";
 const BASE_URL = `https://api.telegram.org/bot${TOKEN}`;
 
 if (!TOKEN) { console.error("TELEGRAM_BOT_TOKEN not set"); process.exit(1); }

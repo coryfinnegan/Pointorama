@@ -106,7 +106,7 @@ function QuickAddModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
 type PointsData = { total: number; logs: PointsLog[]; allowance: AllowanceSettings };
 type MoneyData = { totalCents: number };
 
-const KID_NAME = process.env.NEXT_PUBLIC_KID_NAME ?? "SAM";
+const KID_NAME = process.env.NEXT_PUBLIC_KID_NAME ?? "KID";
 
 function useCountUp(target: number, duration = 900) {
   const [display, setDisplay] = useState(0);

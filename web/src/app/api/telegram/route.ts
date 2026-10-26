@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const logs = await db.select().from(pointsLog);
     const newTotal = logs.reduce((s, l) => s + l.amount, 0);
 
-    const kidName = process.env.NEXT_PUBLIC_KID_NAME ?? "Sam";
+    const kidName = process.env.NEXT_PUBLIC_KID_NAME ?? "Kid";
     const sign = isAdd ? "+" : "-";
     await sendMessage(
       chatId,

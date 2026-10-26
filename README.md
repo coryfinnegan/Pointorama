@@ -1,6 +1,6 @@
 # Pointorama ⭐
 
-A points-and-prizes rewards tracker for kids. Dad awards points for good behavior and school performance; Sam browses the Prize Shop and redeems prizes; Dad fulfills them in the Admin panel.
+A points-and-prizes rewards tracker for kids. Dad awards points for good behavior and school performance; your kid browses the Prize Shop and redeems prizes; Dad fulfills them in the Admin panel.
 
 ## Features
 
@@ -19,7 +19,7 @@ A points-and-prizes rewards tracker for kids. Dad awards points for good behavio
 **Admin Panel** *(PIN-protected)*
 - Add or deduct points with an optional note
 - Add prizes with name, description, point cost, and optional image URL
-- Pending redemption queue — see what Sam redeemed and mark it fulfilled with one click
+- Pending redemption queue — see what your kid redeemed and mark it fulfilled with one click
 - Redemption history — log of everything already fulfilled
 - Manage active prizes (remove/soft-delete)
 
@@ -33,7 +33,7 @@ A points-and-prizes rewards tracker for kids. Dad awards points for good behavio
 - [ ] Edit existing prizes (dialog with pre-filled fields)
 - [ ] Full point history page with date filters
 - [ ] Prize image URL preview in the admin form
-- [ ] Parent notification (email via Resend) when Sam redeems a prize
+- [ ] Parent notification (email via Resend) when your kid redeems a prize
 - [ ] Cancel redemption button for the kid
 - [ ] Roku TV channel (reads `/api/points` + `/api/prizes` via BrightScript)
 - [ ] Amazon integration — "Buy on Amazon" deep-link on each prize
@@ -71,7 +71,7 @@ Create `web/.env.local`:
 
 ```env
 # Kid's display name on the dashboard
-NEXT_PUBLIC_KID_NAME=Sam
+NEXT_PUBLIC_KID_NAME=Kid
 
 # SHA-256 hash of your admin PIN (default below = "1234")
 ADMIN_PIN_HASH=03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4

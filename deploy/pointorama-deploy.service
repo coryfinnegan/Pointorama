@@ -1,0 +1,9 @@
+[Unit]
+Description=Pointorama pull-based deploy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/pointorama/poll-deploy.sh
+TimeoutStartSec=15min

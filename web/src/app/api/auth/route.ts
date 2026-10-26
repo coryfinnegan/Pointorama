@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { checkPinAttempt, recordPinFailure, clearPinFailures, clientKey } from "@/lib/rateLimit";
 import { createSessionToken, COOKIE_NAME, EXPIRY_SECONDS } from "@/lib/session";
 
 export async function POST(req: Request) {
@@ -9,13 +10,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  const key = clientKey(req);
+  if (!checkPinAttempt(key)) {
+    return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
+  }
+
   const hashB64 = process.env.ADMIN_PIN_HASH ?? "";
   const hash = Buffer.from(hashB64, "base64").toString("utf8");
   const valid = await bcrypt.compare(pin, hash);
   if (!valid) {
+    recordPinFailure(key);
     return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
   }
 
+  clearPinFailures(key);
   const token = await createSessionToken();
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {

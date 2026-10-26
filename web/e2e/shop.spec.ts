@@ -27,6 +27,6 @@ test.describe("Prize Shop", () => {
     await page.goto("/shop");
     await page.getByRole("link", { name: "Dashboard" }).click();
     await expect(page).toHaveURL("/");
-    await expect(page.getByText("Hi, Sam!")).toBeVisible();
+    await expect(page.getByText("Hi, Kid!")).toBeVisible();
   });
 });

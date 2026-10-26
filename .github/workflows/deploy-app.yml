@@ -22,10 +22,6 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm test -- --run
-        env:
-          SESSION_SECRET: test-secret-key-padded-to-32-bytes!!!!
-          ADMIN_PIN_HASH: JDJiJDEwJFVOTmpNeWJ4Mjc5cXJHb3hSNzY3UC5jV1N1d0JLcGEzSVRpMEZ0SENWbnk3S2N0dVlkZU55
-          NEXT_PUBLIC_KID_NAME: Sam
 
   deploy:
     runs-on: ubuntu-latest

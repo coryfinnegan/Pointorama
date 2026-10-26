@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
   const token = searchParams.get("token");
   if (!token) return new NextResponse("Missing token", { status: 400 });
 
-  const kidName = process.env.NEXT_PUBLIC_KID_NAME ?? "Sam";
+  const kidName = process.env.NEXT_PUBLIC_KID_NAME ?? "Kid";
   const serverUrl = `${protocol}//${host}`;
   const plist = buildPlist(token, serverUrl, kidName);
   const filename = `Add-${kidName}-Points.shortcut`;

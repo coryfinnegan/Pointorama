@@ -420,7 +420,7 @@ export default function AdminPage() {
                   <li>Add <strong style={{ color: "var(--text)" }}>Ask for Input</strong> → type: Text → prompt: "Reason?"</li>
                   <li>Add <strong style={{ color: "var(--text)" }}>Set Variable</strong> → name: Reason</li>
                   <li>Add <strong style={{ color: "var(--text)" }}>Get Contents of URL</strong> → paste the endpoint URL above → tap <strong style={{ color: "var(--text)" }}>Show More</strong> → Method: <strong style={{ color: "var(--text)" }}>POST</strong> → Headers: add <code style={{ color: "var(--gold)" }}>Authorization</code> = Bearer token above → Request Body: <strong style={{ color: "var(--text)" }}>JSON</strong> → add <code style={{ color: "var(--gold)" }}>amount</code> = Amount variable, <code style={{ color: "var(--gold)" }}>note</code> = Reason variable</li>
-                  <li>Tap the shortcut name at the top → rename to <strong style={{ color: "var(--text)" }}>"Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Sam"} Points"</strong> → tap <strong style={{ color: "var(--text)" }}>Done</strong></li>
+                  <li>Tap the shortcut name at the top → rename to <strong style={{ color: "var(--text)" }}>"Add {process.env.NEXT_PUBLIC_KID_NAME ?? "Kid"} Points"</strong> → tap <strong style={{ color: "var(--text)" }}>Done</strong></li>
                 </ol>
                 <button className="pbtn pbtn-dim" style={{ fontSize: 8, padding: "8px 12px", width: "100%", marginTop: 12 }} onClick={regenerateToken}>
                   REGENERATE TOKEN

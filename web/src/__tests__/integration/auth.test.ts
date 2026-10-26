@@ -13,17 +13,19 @@ vi.mock("next/headers", () => ({
 }));
 
 const { POST } = await import("@/app/api/auth/route");
+const { resetRateLimits } = await import("@/lib/rateLimit");
 
-function authRequest(body: unknown) {
+function authRequest(body: unknown, ip?: string) {
   return new NextRequest("http://localhost/api/auth", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(ip ? { "x-forwarded-for": ip } : {}) },
     body: JSON.stringify(body),
   });
 }
 
 beforeEach(() => {
   mockCookieSet.mockClear();
+  resetRateLimits();
 });
 
 describe("POST /api/auth", () => {
@@ -63,5 +65,28 @@ describe("POST /api/auth", () => {
     const [, token] = mockCookieSet.mock.calls[0];
     const { verifySessionToken } = await import("@/lib/session");
     expect(await verifySessionToken(token)).toBe(true);
+  });
+});
+
+describe("POST /api/auth rate limiting", () => {
+  it("returns 429 after 5 wrong PINs, even for the correct PIN", async () => {
+    for (let i = 0; i < 5; i++) {
+      expect((await POST(authRequest({ pin: "0000" }, "9.9.9.9"))).status).toBe(401);
+    }
+    expect((await POST(authRequest({ pin: "1234" }, "9.9.9.9"))).status).toBe(429);
+    expect(mockCookieSet).not.toHaveBeenCalled();
+  });
+
+  it("does not block a different client", async () => {
+    for (let i = 0; i < 5; i++) await POST(authRequest({ pin: "0000" }, "9.9.9.9"));
+    expect((await POST(authRequest({ pin: "1234" }, "8.8.8.8"))).status).toBe(200);
+  });
+
+  it("a successful login resets the failure count", async () => {
+    for (let i = 0; i < 4; i++) await POST(authRequest({ pin: "0000" }, "7.7.7.7"));
+    expect((await POST(authRequest({ pin: "1234" }, "7.7.7.7"))).status).toBe(200);
+    for (let i = 0; i < 4; i++) {
+      expect((await POST(authRequest({ pin: "0000" }, "7.7.7.7"))).status).toBe(401);
+    }
   });
 });

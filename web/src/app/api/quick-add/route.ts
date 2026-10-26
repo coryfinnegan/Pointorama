@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { getDb } from "@/db";
 import { pointsLog, allowanceSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { checkPinAttempt, recordPinFailure, clearPinFailures, clientKey } from "@/lib/rateLimit";
 
 // GET /api/quick-add?token=TOKEN&amount=N&note=... — used by the Siri Shortcut
 export async function GET(req: NextRequest) {
@@ -45,12 +46,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
   } else if (typeof body.pin === "string") {
+    const key = clientKey(req);
+    if (!checkPinAttempt(key)) {
+      return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
+    }
     const hashB64 = process.env.ADMIN_PIN_HASH ?? "";
     const hash = Buffer.from(hashB64, "base64").toString("utf8");
     const valid = await bcrypt.compare(body.pin, hash);
     if (!valid) {
+      recordPinFailure(key);
       return NextResponse.json({ error: "Wrong PIN" }, { status: 401 });
     }
+    clearPinFailures(key);
   } else {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

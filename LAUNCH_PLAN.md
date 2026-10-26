@@ -4,24 +4,17 @@ The goal is simple: find out if strangers will hand over their email for this pr
 
 ---
 
-## Step 1 — Deploy the landing page publicly (free, ~20 min)
+## Step 1 � Landing page (deferred)
 
-The landing page lives at `/landing` in the existing repo. Deploy it separately on Vercel so it's publicly accessible without touching your private Tailscale server.
-
-1. Go to [vercel.com](https://vercel.com) → Import Git Repository → select `Pointorama`
-2. Set the root directory to `web`
-3. Add one environment variable: `DB_PATH` → point to a writable path (Vercel uses a temp filesystem; for the waitlist you'll want a real DB — see Step 2)
-4. After deploy, Vercel gives you a URL like `pointorama.vercel.app`
-
-**Note:** The waitlist emails go to a SQLite DB. Vercel's filesystem is ephemeral, so swap the waitlist storage for a free Postgres or use [Vercel KV](https://vercel.com/docs/storage/vercel-kv) — or just point the API to a simple email service (Resend free tier).
+The landing page and its Vercel deploy were removed from the repo for now. Restore `landing-page/` and `.github/workflows/deploy-landing.yml` from git history when you're ready to publish it (the old workflow also needs a `package-lock.json` for `npm ci`).
 
 ---
 
 ## Step 2 — Get a real domain (~$12/yr)
 
-`pointorama.app` or `pointorama.io` — check availability on Namecheap or Cloudflare Registrar. Point it at your Vercel deployment.
+`pointorama.app` or `pointorama.io` — check availability on Namecheap or Cloudflare Registrar. Point it at wherever the landing page is hosted.
 
-A real domain builds trust. Ads to a `.vercel.app` URL convert worse.
+A real domain builds trust. Ads to a free-subdomain URL convert worse.
 
 ---
 
